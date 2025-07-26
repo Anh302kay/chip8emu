@@ -33,11 +33,9 @@ int main(int* argc, char* argv[])
     SDL_SetTextureScaleMode(screen, SDL_SCALEMODE_NEAREST);
 
     bool gameRunning = true;
-
     auto previous = std::chrono::high_resolution_clock::now();
     auto current = previous;
-    // auto accumulator = previous;
-    // double accumulator = 0;
+
     std::chrono::duration<double, std::milli> accumulator;
 
     while(gameRunning) {

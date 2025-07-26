@@ -56,6 +56,11 @@ void Chip8::execIns()
 {
     uint16_t opcode = memory[PC] << 8 | memory[PC+1];
 
+    if(soundTimer > 0)
+        soundTimer--;
+
+    if(delayTimer > 0)
+        delayTimer--;
 
     // 0xDXYN, 0xDNNN, 0xDXKK
     uint8_t d = (opcode & 0xF000) >> 12;
@@ -67,7 +72,7 @@ void Chip8::execIns()
 
     switch(d) {
         case 0x0:
-            if(opcode == 0x00E0) // clear videoRAM
+            if(opcode == CLS) // clear videoRAM
                 memset(videoRam, 0, sizeof(videoRam));
             else if(opcode == 0x00EE) // return
                 PC = stack[SP--];
@@ -76,17 +81,75 @@ void Chip8::execIns()
         case 0x1: // has to be jmp
             PC = nnn;
             break;
-        
-        case 0x6:
+
+        case CALL:
+            stack[++SP] = PC;
+            PC = nnn;
+            break;
+        case SEimm:
+            PC = (registers[x] == kk) ? PC + 2 : PC; 
+            break;
+        case SNEimm:
+            PC = (registers[x] != kk) ? PC + 2 : PC; 
+            break;
+
+        case SE:
+            PC = (registers[x] == registers[y]) ? PC + 2 : PC;
+            break;
+        case LD:
             registers[x] = kk;
             break;
 
-        case 0x7:
+        case ADD:
             registers[x] += kk;
+            break;
+
+        case 8:
+            if(n == 0) 
+                registers[x] = registers[y];
+            else if(n == 1)
+                registers[x] |= registers[y];
+            else if(n == 2)
+                registers[x] &= registers[y];
+            else if(n == 3)
+                registers[x] ^= registers[y];
+            else if(n == 4) {
+                uint16_t sum = registers[x] + registers[y];
+                registers[0xF] = sum > 255;
+                registers[x] = sum & 0xFF;
+            }
+            else if(n == 5) {
+                registers[0xF] = registers[x] > registers[y];
+                registers[x] -= registers[y];
+            }
+            else if(n == 6) {
+                registers[0xF] = registers[x] & 0x1;
+                registers[x] >>= 1;
+            }
+            else if(n == 7) {
+                registers[0xF] = registers[y] > registers[x];
+                registers[x] = registers[y] - registers[x];
+            }
+            else if(n == 0xE) {
+                registers[0xF] = registers[x] >> 7;
+                registers[x] <<= 1;
+            }
+            break;
+
+        case 0x9:
+            PC = (registers[x] != registers[y]) ? PC + 2 : PC;
             break;
 
         case 0xA:
             I = nnn;
+            break;
+
+        case 0xB:
+            PC = nnn + registers[0];
+            break;
+
+        case 0xC:
+            registers[x] = std::uniform_int_distribution<uint8_t>()(rnd) & kk;
             break;
 
         case 0xD:
@@ -95,7 +158,7 @@ void Chip8::execIns()
             const uint8_t xPos = registers[x] % 64;
             const uint8_t yPos = registers[y] % 32;
 
-            registers[0xF] = 0;
+            // registers[0xF] = 0;
 
             for(int row = 0; row < height; row++) {
                 uint8_t spriteByte = memory[I + row];
@@ -106,8 +169,7 @@ void Chip8::execIns()
                     uint8_t* screenPixel = &videoRam[(yPos + row) * 64 + xPos + byte];
 
                     if(spritePixel) {
-                        if(screenPixel[0] == 255)
-                            registers[0xF] = 1;
+                        registers[0xF] = screenPixel[0] == 255;
                         screenPixel[0] ^= 255;
                     }
                 }
