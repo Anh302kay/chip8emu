@@ -7,25 +7,33 @@
 
 #include "chip8.hpp"
 
-constexpr auto timeStep = std::chrono::milliseconds(1);
+constexpr auto timeStep = std::chrono::microseconds(100);
 
 int main(int argc, char* argv[])
 {
     SDL_SetAppMetadata("Chip8 Emulator", "0.0.1", "com.Anh302kay.CHIP8");
 
-    if(!SDL_Init(SDL_INIT_VIDEO)) {
+    if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         std::cout << "error could not init sdl3:" << SDL_GetError();
     }
 
     SDL_Window* window;
     SDL_Renderer* renderer;
-    
     if(!SDL_CreateWindowAndRenderer("Chip8 Emulator", 640*2, 320*2, 0, &window, &renderer)) {
         std::cout << "error could not create window:" << SDL_GetError();
     }
 
+
     SDL_Texture* screen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, 64, 32);
     SDL_SetTextureScaleMode(screen, SDL_SCALEMODE_NEAREST);
+
+    SDL_AudioSpec spec;
+    spec.channels = 1;
+    spec.format = SDL_AUDIO_U8;
+    spec.freq = 22050;
+
+    SDL_AudioStream* stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
+
 
     Chip8 chip8;
     memset(chip8.videoRam, 0, sizeof(chip8.videoRam));
