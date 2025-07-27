@@ -17,17 +17,18 @@ enum {
 };
 
 struct Chip8 {
-    uint8_t memory[4096];
-    uint8_t videoRam[64*32];
+    uint8_t memory[4096] = {0};
+    uint8_t videoRam[64*32] = {0};
 
-    uint8_t registers[16];
-    uint8_t soundTimer, delayTimer, SP;
-    uint16_t PC, I;
-    uint16_t stack[16];
+    uint8_t registers[16] = {0};
+    uint8_t soundTimer = 0, delayTimer = 0, SP = 0;
+    uint16_t PC = 0, I = 0;
+    uint16_t stack[16] = {0};
+    bool keypad[16] = {false};
     
     std::mt19937 rnd;
 
-    Chip8() :rnd(std::chrono::steady_clock::now().time_since_epoch().count()) {}
+    Chip8();
 
     uint16_t startAddress = 0x200;
 

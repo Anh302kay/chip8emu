@@ -2,8 +2,11 @@
 #include <fstream>
 #include <cstring>
 #include <cstdint>
+#include <SDL3/SDL.h>
 
 #include "chip8.hpp"
+
+constexpr int fontAddress = 0x50;
 
 static uint8_t font[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -24,7 +27,13 @@ static uint8_t font[] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-void Chip8::loadROM(const char* filename) {
+Chip8::Chip8() :rnd(std::chrono::steady_clock::now().time_since_epoch().count()) 
+{
+    memcpy(&memory[fontAddress], font, sizeof(font));
+}
+
+void Chip8::loadROM(const char* filename) 
+{
     std::ifstream file;
     file.open(filename, std::ios::binary | std::ios::ate);
     if(!file.is_open()) {
@@ -35,13 +44,15 @@ void Chip8::loadROM(const char* filename) {
     int length = file.tellg();
 
     //if file is too big
-    if(length > 0x1000) {
+    if(length > 0xE00) {
         std::cout << "program too big\n";
+        file.close();
+        return;
     }
-    else if(length > 0xE00) { // if the program is bigger than the 3.5kb block of memory but fits in 4kb
-        startAddress = 0;
-        std::cout << "extended memory mode activated\n";
-    } 
+    // else if(length > 0xE00) { // if the program is bigger than the 3.5kb block of memory but fits in 4kb
+    //     startAddress = 0;
+    //     std::cout << "extended memory mode activated\n";
+    // } 
     
 
     file.seekg(file.beg);
@@ -52,9 +63,31 @@ void Chip8::loadROM(const char* filename) {
     PC = startAddress;
 }
 
+void Chip8::processInput() 
+{
+    const bool* keystate = SDL_GetKeyboardState(NULL);
+    keypad[0] = keystate[SDL_SCANCODE_X];
+    keypad[1] = keystate[SDL_SCANCODE_1];
+    keypad[2] = keystate[SDL_SCANCODE_2];
+    keypad[3] = keystate[SDL_SCANCODE_3];
+    keypad[4] = keystate[SDL_SCANCODE_Q];
+    keypad[5] = keystate[SDL_SCANCODE_W];
+    keypad[6] = keystate[SDL_SCANCODE_E];
+    keypad[7] = keystate[SDL_SCANCODE_A];
+    keypad[8] = keystate[SDL_SCANCODE_S];
+    keypad[9] = keystate[SDL_SCANCODE_D];
+    keypad[10] = keystate[SDL_SCANCODE_Z];
+    keypad[11] = keystate[SDL_SCANCODE_C];
+    keypad[12] = keystate[SDL_SCANCODE_4];
+    keypad[13] = keystate[SDL_SCANCODE_R];
+    keypad[14] = keystate[SDL_SCANCODE_F];
+    keypad[15] = keystate[SDL_SCANCODE_V];
+}
+
 void Chip8::execIns()
 {
     uint16_t opcode = memory[PC] << 8 | memory[PC+1];
+    PC += 2;
 
     if(soundTimer > 0)
         soundTimer--;
@@ -70,15 +103,18 @@ void Chip8::execIns()
     uint8_t kk = opcode & 0x00FF;
     uint16_t nnn = opcode & 0x0FFF;
 
+    // uint8_t& xReg = registers[x];
+    // uint8_t& yReg = registers[y];
+
     switch(d) {
         case 0x0:
             if(opcode == CLS) // clear videoRAM
                 memset(videoRam, 0, sizeof(videoRam));
-            else if(opcode == 0x00EE) // return
+            else if(opcode == RET) // return
                 PC = stack[SP--];
             break;
 
-        case 0x1: // has to be jmp
+        case JMP: // has to be jmp
             PC = nnn;
             break;
 
@@ -158,7 +194,7 @@ void Chip8::execIns()
             const uint8_t xPos = registers[x] % 64;
             const uint8_t yPos = registers[y] % 32;
 
-            // registers[0xF] = 0;
+            registers[0xF] = 0;
 
             for(int row = 0; row < height; row++) {
                 uint8_t spriteByte = memory[I + row];
@@ -177,11 +213,53 @@ void Chip8::execIns()
             }
             break;
 
+        case 0xE:
+            if(kk == 0x9E)
+                PC = (keypad[registers[x]]) ? PC + 2 : PC;
+            else if(kk == 0xA1)
+                PC = (!keypad[registers[x]]) ? PC + 2 : PC;
+            break;
+
+        case 0xF:
+            if(kk == 0x07)
+                registers[x] = delayTimer;
+            else if(kk == 0x0A) { //wait for keypress and loops
+                bool keyPressed = false;
+                for(int i = 0; i < 16; i++) {
+                    if(keypad[i]) {
+                        registers[x] = keypad[i];
+                        keyPressed = true;
+                        break;
+                    }
+                }
+                if(!keyPressed)
+                    PC -= 2;
+            }
+            else if(kk == 0x15) 
+                delayTimer = registers[x];
+            else if(kk == 0x18) 
+                soundTimer = registers[x];
+            else if(kk == 0x1E) 
+                I += registers[x];
+            else if(kk == 0x29)
+                I = fontAddress + registers[x] * 5;
+            else if(kk == 0x33) {
+                memory[I] = registers[x] / 100;
+                memory[I+1] = (registers[x] / 10) % 10;
+                memory[I+2] = registers[x] % 10;
+            }
+            else if(kk == 0x55) {
+                for(int i = 0; i <= x;i++)
+                    memory[I+i] = registers[i];
+            }
+            else if(kk == 0x65) {
+                for(int i = 0; i <= x;i++)
+                    registers[i] = memory[I+i];
+            }
+            break;
         default:
+            std::cout << "Unimplemented Instruction: " << std::hex << PC << "\n";
             break;
     }
 
-
-
-    PC += 2;
 }
