@@ -7,7 +7,27 @@
 
 #include "chip8.hpp"
 
-constexpr auto timeStep = std::chrono::microseconds(100);
+constexpr auto timeStep = std::chrono::microseconds(2500);
+
+static void audioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
+{
+    int currentSample;
+    while(additional_amount > 0) {
+        int16_t samples[128];
+        const int total = SDL_min(additional_amount, sizeof(samples));
+
+        for(int i = 0; i < total; i++) {
+            samples[i] = ( SDL_sinf(currentSample/2) > 0) ? 2000 : -2000 ;
+            currentSample++;
+        }
+
+        additional_amount -= total;
+        SDL_PutAudioStreamData(stream, samples, total);
+
+    }
+    // for(int i = 0; i < additional_amount; i++) {
+    // }
+}
 
 int main(int argc, char* argv[])
 {
@@ -23,21 +43,20 @@ int main(int argc, char* argv[])
         std::cout << "error could not create window:" << SDL_GetError();
     }
 
-
     SDL_Texture* screen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, 64, 32);
     SDL_SetTextureScaleMode(screen, SDL_SCALEMODE_NEAREST);
 
     SDL_AudioSpec spec;
     spec.channels = 1;
-    spec.format = SDL_AUDIO_U8;
-    spec.freq = 22050;
+    spec.format = SDL_AUDIO_S16LE;
+    spec.freq = 2000;
 
-    SDL_AudioStream* stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
-
+    SDL_AudioStream* stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &audioCallback, NULL);
+    // SDL_ResumeAudioStreamDevice(stream);
 
     Chip8 chip8;
     memset(chip8.videoRam, 0, sizeof(chip8.videoRam));
-    chip8.loadROM("hanoi.ch8");
+    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
     // chip8.videoRam[500] = 255;
 
     bool gameRunning = true;
@@ -56,7 +75,12 @@ int main(int argc, char* argv[])
             while(SDL_PollEvent(&e)) {
                 if(e.type == SDL_EVENT_QUIT)
                     gameRunning = false;
+                if(e.type == SDL_EVENT_DROP_FILE) {
+                    chip8.reset();
+                    chip8.loadROM(e.drop.data);
+                }
             }
+
             chip8.processInput();
             chip8.execIns();
             accumulator -= timeStep;

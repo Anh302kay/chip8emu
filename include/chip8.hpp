@@ -30,8 +30,7 @@ struct Chip8 {
 
     Chip8();
 
-    uint16_t startAddress = 0x200;
-
+    void reset();
     void loadROM(const char* filename);
     void processInput();
     void execIns();

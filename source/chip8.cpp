@@ -7,6 +7,7 @@
 #include "chip8.hpp"
 
 constexpr int fontAddress = 0x50;
+constexpr uint16_t startAddress = 0x200;
 
 static uint8_t font[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -31,6 +32,18 @@ Chip8::Chip8() :rnd(std::chrono::steady_clock::now().time_since_epoch().count())
 {
     memcpy(&memory[fontAddress], font, sizeof(font));
 }
+
+void Chip8::reset()
+{
+    memset(videoRam, 0, sizeof(videoRam));
+    memset(registers, 0, sizeof(registers));
+    memset(stack, 0, sizeof(stack));
+    PC = startAddress;
+    SP = 0;
+    delayTimer = 0;
+    soundTimer = 0;
+}
+
 
 void Chip8::loadROM(const char* filename) 
 {
