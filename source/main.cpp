@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
     Chip8 chip8;
     memset(chip8.videoRam, 0, sizeof(chip8.videoRam));
-    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
+    chip8.loadROM("hanoi.ch8");
     // chip8.videoRam[500] = 255;
 
     bool gameRunning = true;
@@ -80,7 +80,10 @@ int main(int argc, char* argv[])
                     chip8.loadROM(e.drop.data);
                 }
             }
-
+            if(chip8.soundTimer > 0)
+                SDL_ResumeAudioStreamDevice(stream);
+            else 
+                SDL_PauseAudioStreamDevice(stream);
             chip8.processInput();
             chip8.execIns();
             accumulator -= timeStep;
