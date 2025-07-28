@@ -122,6 +122,12 @@ void platformSDL::stopSound()
     SDL_PauseAudioStreamDevice(stream);
 }
 
+void platformSDL::startFrame()
+{
+    SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+    SDL_RenderClear(renderer);
+}
+
 void platformSDL::render(uint8_t* videoRam)
 {
     SDL_Surface* surface;
@@ -131,8 +137,11 @@ void platformSDL::render(uint8_t* videoRam)
         surface = nullptr;
     }
 
-    SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-    SDL_RenderClear(renderer);
+
     SDL_RenderTexture(renderer, screen, NULL, NULL);
+}
+
+void platformSDL::endFrame()
+{
     SDL_RenderPresent(renderer);
 }

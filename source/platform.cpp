@@ -5,17 +5,25 @@
 
 void platform::processInput(bool* keypad)
 {
-    std::cout << "processInput not implement\n";
+    std::cout << "processInput not implemented\n";
 }
 void platform::playSound()
 {
-    std::cout << "playSound not implement\n";
+    std::cout << "playSound not implemented\n";
 }
 void platform::stopSound()
 {
-    std::cout << "stopSound not implement\n";
+    std::cout << "stopSound not implemented\n";
+}
+void platform::startFrame()
+{
+    std::cout << "startFrame not implenteded\n";
 }
 void platform::render(uint8_t* videoRam)
 {
-    std::cout << "render not implement\n";
+    std::cout << "render not implemented\n";
+}
+void platform::endFrame()
+{
+    std::cout << "endFrame not implenteded\n";
 }

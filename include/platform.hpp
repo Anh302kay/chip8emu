@@ -7,5 +7,7 @@ public:
     virtual void processInput(bool* keypad);
     virtual void playSound();
     virtual void stopSound();
+    virtual void startFrame();
     virtual void render(uint8_t* videoRam);
+    virtual void endFrame();
 };

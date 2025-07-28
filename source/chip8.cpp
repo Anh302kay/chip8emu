@@ -30,6 +30,7 @@ static uint8_t font[] = {
 Chip8::Chip8() :rnd(std::chrono::steady_clock::now().time_since_epoch().count()) 
 {
     memcpy(&memory[fontAddress], font, sizeof(font));
+    memset(videoRam, 0, sizeof(videoRam));
 }
 
 void Chip8::reset()

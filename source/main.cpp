@@ -18,9 +18,7 @@ int main(int argc, char* argv[])
     platformClass platform;
 
     Chip8 chip8;
-    memset(chip8.videoRam, 0, sizeof(chip8.videoRam));
     chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
-    // chip8.videoRam[500] = 255;
 
     bool gameRunning = true;
     auto previous = std::chrono::high_resolution_clock::now();
@@ -34,9 +32,8 @@ int main(int argc, char* argv[])
         accumulator += current - previous;
 
         while(accumulator > timeStep) {
-
             platform.processInput(chip8, gameRunning);
-            
+
             if(chip8.soundTimer > 0)
                 platform.playSound();
             else 
@@ -45,8 +42,10 @@ int main(int argc, char* argv[])
             chip8.execIns();
             accumulator -= timeStep;
         }
-
+        platform.startFrame();
         platform.render(chip8.videoRam);
+
+        platform.endFrame();
     }
 
     return 0;

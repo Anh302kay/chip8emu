@@ -1,5 +1,8 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "platform.hpp"
 
 #include "chip8.hpp"
@@ -16,7 +19,9 @@ public:
     void processInput(Chip8& chip8, bool& gameRunning);
     void playSound();
     void stopSound();
+    void startFrame();
     void render(uint8_t* videoRam);
+    void endFrame();
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;

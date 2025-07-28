@@ -1,7 +1,8 @@
 CC=g++
 CFLAGS = -Wall -c -std=c++20 -g -D__PC
-INCLUDES = include
-SOURCES  = source 
+INCLUDES = include include/external
+INCFLAGS = $(addprefix -I, $(INCLUDES))
+SOURCES  = source include/external
 BUILD = build
 LIBS = -lmingw32 -lgdi32 -lopengl32 -limm32 -lSDL3 
 
@@ -26,7 +27,7 @@ $(TARGET).exe : $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET).exe $(LIBS)
 
 $(BUILD)/%.o : %.cpp
-	$(CC) $(CFLAGS) $(LIBS) -I$(INCLUDES) $< -o $@
+	$(CC) $(CFLAGS) $(LIBS) $(INCFLAGS) $< -o $@
 
 clean:
 	rm build/*.o $(TARGET).exe
