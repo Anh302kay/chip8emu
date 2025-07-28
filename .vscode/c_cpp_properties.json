@@ -10,7 +10,8 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "__PC"
             ],
             "compilerPath": "E:\\msys64\\mingw64\\bin\\g++.exe",
             "cStandard": "c11",

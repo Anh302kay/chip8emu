@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS = -Wall -c -std=c++20 -g
+CFLAGS = -Wall -c -std=c++20 -g -D__PC
 INCLUDES = include
 SOURCES  = source 
 BUILD = build

@@ -2,7 +2,6 @@
 #include <fstream>
 #include <cstring>
 #include <cstdint>
-#include <SDL3/SDL.h>
 
 #include "chip8.hpp"
 
@@ -78,23 +77,7 @@ void Chip8::loadROM(const char* filename)
 
 void Chip8::processInput() 
 {
-    const bool* keystate = SDL_GetKeyboardState(NULL);
-    keypad[0] = keystate[SDL_SCANCODE_X];
-    keypad[1] = keystate[SDL_SCANCODE_1];
-    keypad[2] = keystate[SDL_SCANCODE_2];
-    keypad[3] = keystate[SDL_SCANCODE_3];
-    keypad[4] = keystate[SDL_SCANCODE_Q];
-    keypad[5] = keystate[SDL_SCANCODE_W];
-    keypad[6] = keystate[SDL_SCANCODE_E];
-    keypad[7] = keystate[SDL_SCANCODE_A];
-    keypad[8] = keystate[SDL_SCANCODE_S];
-    keypad[9] = keystate[SDL_SCANCODE_D];
-    keypad[10] = keystate[SDL_SCANCODE_Z];
-    keypad[11] = keystate[SDL_SCANCODE_C];
-    keypad[12] = keystate[SDL_SCANCODE_4];
-    keypad[13] = keystate[SDL_SCANCODE_R];
-    keypad[14] = keystate[SDL_SCANCODE_F];
-    keypad[15] = keystate[SDL_SCANCODE_V];
+
 }
 
 void Chip8::execIns()

@@ -7,56 +7,19 @@
 
 #include "chip8.hpp"
 
+#ifdef __PC
+#include "platformSDL.hpp"
+#endif
+
 constexpr auto timeStep = std::chrono::microseconds(2500);
-
-static void audioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
-{
-    int currentSample;
-    while(additional_amount > 0) {
-        int16_t samples[128];
-        const int total = SDL_min(additional_amount, sizeof(samples));
-
-        for(int i = 0; i < total; i++) {
-            samples[i] = ( SDL_sinf(currentSample/2) > 0) ? 2000 : -2000 ;
-            currentSample++;
-        }
-
-        additional_amount -= total;
-        SDL_PutAudioStreamData(stream, samples, total);
-
-    }
-    // for(int i = 0; i < additional_amount; i++) {
-    // }
-}
 
 int main(int argc, char* argv[])
 {
-    SDL_SetAppMetadata("Chip8 Emulator", "0.0.1", "com.Anh302kay.CHIP8");
-
-    if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
-        std::cout << "error could not init sdl3:" << SDL_GetError();
-    }
-
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    if(!SDL_CreateWindowAndRenderer("Chip8 Emulator", 640*2, 320*2, 0, &window, &renderer)) {
-        std::cout << "error could not create window:" << SDL_GetError();
-    }
-
-    SDL_Texture* screen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, 64, 32);
-    SDL_SetTextureScaleMode(screen, SDL_SCALEMODE_NEAREST);
-
-    SDL_AudioSpec spec;
-    spec.channels = 1;
-    spec.format = SDL_AUDIO_S16LE;
-    spec.freq = 2000;
-
-    SDL_AudioStream* stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &audioCallback, NULL);
-    // SDL_ResumeAudioStreamDevice(stream);
+    platformClass platform;
 
     Chip8 chip8;
     memset(chip8.videoRam, 0, sizeof(chip8.videoRam));
-    chip8.loadROM("hanoi.ch8");
+    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
     // chip8.videoRam[500] = 255;
 
     bool gameRunning = true;
@@ -71,38 +34,20 @@ int main(int argc, char* argv[])
         accumulator += current - previous;
 
         while(accumulator > timeStep) {
-            SDL_Event e;
-            while(SDL_PollEvent(&e)) {
-                if(e.type == SDL_EVENT_QUIT)
-                    gameRunning = false;
-                if(e.type == SDL_EVENT_DROP_FILE) {
-                    chip8.reset();
-                    chip8.loadROM(e.drop.data);
-                }
-            }
+
+            platform.processInput(chip8, gameRunning);
+            
             if(chip8.soundTimer > 0)
-                SDL_ResumeAudioStreamDevice(stream);
+                platform.playSound();
             else 
-                SDL_PauseAudioStreamDevice(stream);
-            chip8.processInput();
+                platform.stopSound();
+
             chip8.execIns();
             accumulator -= timeStep;
         }
 
-        SDL_Surface* surface;
-        if(SDL_LockTextureToSurface(screen, NULL, &surface)) {
-            memcpy(surface->pixels, chip8.videoRam, sizeof(chip8.videoRam));
-            SDL_UnlockTexture(screen);
-            surface = nullptr;
-        }
-
-        SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-        SDL_RenderClear(renderer);
-        SDL_RenderTexture(renderer, screen, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        platform.render(chip8.videoRam);
     }
 
-    SDL_DestroyTexture(screen);
-    SDL_Quit();
     return 0;
 }
