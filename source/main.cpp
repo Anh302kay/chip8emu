@@ -11,7 +11,6 @@
 #include "platformSDL.hpp"
 #endif
 
-constexpr auto timeStep = std::chrono::microseconds(2500);
 
 int main(int argc, char* argv[])
 {
@@ -24,6 +23,8 @@ int main(int argc, char* argv[])
     auto previous = std::chrono::high_resolution_clock::now();
     auto current = previous;
 
+    int timeStep = 2500;
+    // auto timeStep = std::chrono::microseconds(2500);
     std::chrono::duration<double, std::milli> accumulator;
 
     while(gameRunning) {
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
         current = std::chrono::high_resolution_clock::now();
         accumulator += current - previous;
 
-        while(accumulator > timeStep) {
+        while(accumulator > std::chrono::microseconds(timeStep)) {
             platform.processInput(chip8, gameRunning);
 
             if(chip8.soundTimer > 0)
@@ -40,10 +41,19 @@ int main(int argc, char* argv[])
                 platform.stopSound();
 
             chip8.execIns();
-            accumulator -= timeStep;
+            accumulator -= std::chrono::microseconds(timeStep);
         }
         platform.startFrame();
         platform.render(chip8.videoRam);
+
+#ifdef __PC
+        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
+        ImGui::Begin("Settings");
+        if(ImGui::Button("Reset"))
+            chip8.reset();
+        ImGui::DragInt("Timescale", &timeStep, 50, 1, 0, "%dus");
+        ImGui::End();
+#endif
 
         platform.endFrame();
     }
