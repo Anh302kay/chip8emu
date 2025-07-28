@@ -2,6 +2,8 @@
 #include <SDL3/SDL.h>
 #include "platformSDL.hpp"
 
+#include "icon.h"
+
 static void audioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
     int currentSample;
@@ -38,6 +40,11 @@ platformSDL::platformSDL()
         return;
     }
 
+    SDL_IOStream* iconIO = SDL_IOFromConstMem(icon_bmp, icon_bmp_size);
+    SDL_Surface* icon = SDL_LoadBMP_IO(iconIO, true);
+    SDL_SetWindowIcon(window, icon);
+    SDL_DestroySurface(icon);
+
     screen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, 64, 32);
     if(screen == NULL) {
         std::cout << "could not create tex: " << SDL_GetError();
@@ -47,13 +54,25 @@ platformSDL::platformSDL()
     spec.channels = 1;
     spec.format = SDL_AUDIO_S16LE;
     spec.freq = 2000;
-
     stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &audioCallback, NULL);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
+    
 }
 
 platformSDL::~platformSDL()
 {
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
     SDL_DestroyTexture(screen);
     SDL_Quit();
 }
@@ -85,6 +104,8 @@ void platformSDL::processInput(Chip8& chip8, bool& gameRunning)
 
     SDL_Event e;
     while(SDL_PollEvent(&e)) {
+        ImGui_ImplSDL3_ProcessEvent(&e);
+
         if(e.type == SDL_EVENT_QUIT)
             gameRunning = false;
         if(e.type == SDL_EVENT_DROP_FILE) {
@@ -124,7 +145,10 @@ void platformSDL::stopSound()
 
 void platformSDL::startFrame()
 {
-    SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+    // SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
     SDL_RenderClear(renderer);
 }
 
@@ -137,11 +161,15 @@ void platformSDL::render(uint8_t* videoRam)
         surface = nullptr;
     }
 
-
     SDL_RenderTexture(renderer, screen, NULL, NULL);
+    static bool window = true;
+    if(window)
+        ImGui::ShowDemoWindow(&window);
 }
 
 void platformSDL::endFrame()
 {
+    ImGui::Render();
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);
 }

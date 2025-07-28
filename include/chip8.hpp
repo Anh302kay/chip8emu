@@ -28,6 +28,7 @@ struct Chip8 {
     bool keypad[16] = {false};
     
     std::mt19937 rnd;
+    uint8_t palette = 255;
 
     Chip8();
 
