@@ -1,4 +1,5 @@
 build/*.*
+build3ds/*.*
 bin/debug
 bin/release
 res/*.*

@@ -18,27 +18,6 @@
         "preLaunchTask": "build debug darwin"
     },
     {
-        "name": "debug windows",
-        "type": "cppdbg",
-        "request": "launch",
-        "args": [],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "program": "${workspaceFolder}\\bin\\debug\\${workspaceFolderBasename}.exe",
-        "MIMode": "gdb",
-        "miDebuggerPath": "E:\\msys64\\mingw64\\bin\\gdb.exe",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            }
-        ],
-        "preLaunchTask": "build debug windows"
-    },
-    {
         "name": "debug-make windows",
         "type": "cppdbg",
         "request": "launch",
@@ -58,6 +37,32 @@
             }
         ],
         "preLaunchTask": "make-windows"
+    },
+    {
+        "name": "make 3ds",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}\\${workspaceFolderBasename}.elf",
+        // "args": ["${workspaceFolderBasename}.3dsx"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "E:\\msys64\\opt\\devkitpro\\devkitARM\\bin\\arm-none-eabi-gdb.exe",
+        "miDebuggerServerAddress": "localhost:4003",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        // "startupCmds": [
+        //     "target remote localhost:4003",
+        //     "c"
+        // ],
+        "preLaunchTask": "run-azahar"
     }
     ]
 }

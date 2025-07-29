@@ -3,7 +3,6 @@
 #include <chrono>
 #include <cstring>
 #include <cstdint>
-#include <SDL3/SDL.h>
 
 #include "chip8.hpp"
 
@@ -24,7 +23,6 @@ int main(int argc, char* argv[])
     auto current = previous;
 
     int timeStep = 2500;
-    // auto timeStep = std::chrono::microseconds(2500);
     std::chrono::duration<double, std::milli> accumulator;
 
     while(gameRunning) {

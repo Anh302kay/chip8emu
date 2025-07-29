@@ -35,6 +35,26 @@
             "cppStandard": "c++20",
             "intelliSenseMode": "macos-gcc-x64",
             "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "3DS-PC",
+            "includePath": [
+                "${workspaceFolder}\\include\\**",
+                "E:\\msys64\\opt\\devkitpro\\libctru\\include\\**",
+                "E:\\msys64\\opt\\devkitpro\\portlibs\\3ds\\include\\**",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\**",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\14.2.0",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\14.2.0\\arm-none-eabi",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\lib\\gcc\\arm-none-eabi\\14.2.0\\include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__3DS__"
+            ],
+            "cppStandard": "gnu++20",
+            "compilerPath": "E:\\msys64\\opt\\devkitPro\\devkitARM\\bin\\arm-none-eabi-g++.exe"
         }
     ],
     "version": 4
