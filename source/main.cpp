@@ -33,6 +33,9 @@ int main(int argc, char* argv[])
         accumulator += current - previous;
 
         while(accumulator > std::chrono::microseconds(timeStep)) {
+            if(!gameRunning)
+                break;
+
             platform.processInput(chip8, gameRunning);
 
             if(chip8.soundTimer > 0)
@@ -46,14 +49,7 @@ int main(int argc, char* argv[])
         platform.startFrame();
         platform.render(chip8.videoRam);
 
-#ifdef __PC
-        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
-        ImGui::Begin("Settings");
-        if(ImGui::Button("Reset"))
-            chip8.reset();
-        ImGui::DragInt("Timescale", &timeStep, 50, 1, 0, "%dus");
-        ImGui::End();
-#endif
+        platform.drawUI(chip8, timeStep);
 
         platform.endFrame();
     }

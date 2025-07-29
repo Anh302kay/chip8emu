@@ -35,6 +35,7 @@ struct Chip8 {
     void reset();
     void loadROM(const char* filename);
     void processInput();
+    void changePalette(uint8_t newPalette);
     void execIns();
 
 };

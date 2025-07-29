@@ -167,6 +167,43 @@ void platformSDL::render(uint8_t* videoRam)
         ImGui::ShowDemoWindow(&window);
 }
 
+void platformSDL::drawUI(Chip8& chip8, int& timeStep)
+{
+    static int test;
+
+    int palette = chip8.palette;
+    int r = (chip8.palette & 0b11100000) >> 5;
+    int g = (chip8.palette & 0b00011100) >> 2;
+    int b = (chip8.palette & 0b00000011);
+    bool paletteChanged = false;
+
+    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
+    ImGui::Begin("Settings");
+    if(ImGui::Button("Reset"))
+        chip8.reset();
+        
+    ImGui::DragInt("Timescale", &timeStep, 25, 1, 10000000, "%dus", ImGuiSliderFlags_AlwaysClamp);
+
+    ImGui::Text("Pixel Colour");
+    ImGui::SetNextItemWidth(75);
+    paletteChanged |= ImGui::SliderInt("##", &r, 0, 7, "R:%d");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(75);
+    paletteChanged |= ImGui::SliderInt("##1", &g, 0, 7, "G:%d");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(75);
+    paletteChanged |= ImGui::SliderInt("##2", &b, 0, 3, "B:%d");
+
+    if(paletteChanged)
+        chip8.changePalette( (r << 5) | ( g << 2) | b );
+
+    // ImGui::Slider
+
+    // ImGui::color
+    // Imgui::d
+    ImGui::End();
+}
+
 void platformSDL::endFrame()
 {
     ImGui::Render();

@@ -81,6 +81,16 @@ void Chip8::processInput()
 
 }
 
+void Chip8::changePalette(uint8_t newPalette)
+{
+    for(uint8_t& pixel : videoRam) {
+        if(pixel == palette)
+            pixel = newPalette;
+    }
+    palette = newPalette;
+}
+
+
 void Chip8::execIns()
 {
     uint16_t opcode = memory[PC] << 8 | memory[PC+1];
@@ -202,8 +212,8 @@ void Chip8::execIns()
                     uint8_t* screenPixel = &videoRam[(yPos + row) * 64 + xPos + byte];
 
                     if(spritePixel) {
-                        registers[0xF] = screenPixel[0] == 255;
-                        screenPixel[0] ^= 255;
+                        registers[0xF] = screenPixel[0] == palette;
+                        screenPixel[0] ^= palette;
                     }
                 }
             }

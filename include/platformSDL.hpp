@@ -22,6 +22,7 @@ public:
     void startFrame();
     void render(uint8_t* videoRam);
     void endFrame();
+    void drawUI(Chip8& chip8, int& timeStep);
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
