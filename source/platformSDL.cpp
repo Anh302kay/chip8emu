@@ -160,8 +160,8 @@ void platformSDL::render(uint8_t* videoRam)
         SDL_UnlockTexture(screen);
         surface = nullptr;
     }
-
-    SDL_RenderTexture(renderer, screen, NULL, NULL);
+    if(!blackPalette)
+        SDL_RenderTexture(renderer, screen, NULL, NULL);
     static bool window = true;
     if(window)
         ImGui::ShowDemoWindow(&window);
@@ -171,7 +171,6 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
 {
     static int test;
 
-    int palette = chip8.palette;
     int r = (chip8.palette & 0b11100000) >> 5;
     int g = (chip8.palette & 0b00011100) >> 2;
     int b = (chip8.palette & 0b00000011);
@@ -186,6 +185,7 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
 
     ImGui::Text("Pixel Colour");
     ImGui::SetNextItemWidth(75);
+    // ImGui::PushStyleColor()
     paletteChanged |= ImGui::SliderInt("##", &r, 0, 7, "R:%d");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(75);
@@ -194,8 +194,12 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
     ImGui::SetNextItemWidth(75);
     paletteChanged |= ImGui::SliderInt("##2", &b, 0, 3, "B:%d");
 
-    if(paletteChanged)
-        chip8.changePalette( (r << 5) | ( g << 2) | b );
+    if(paletteChanged) {
+        uint8_t palette = (r << 5) | ( g << 2) | b ;
+        blackPalette = palette == 0;
+        if(!blackPalette)
+            chip8.changePalette( palette );
+    }
 
     // ImGui::Slider
 

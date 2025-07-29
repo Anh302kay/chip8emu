@@ -24,6 +24,7 @@ public:
     void endFrame();
     void drawUI(Chip8& chip8, int& timeStep);
 private:
+    bool blackPalette = false;
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* screen;
