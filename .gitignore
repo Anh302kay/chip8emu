@@ -5,3 +5,6 @@ bin/release
 res/*.*
 *.ch8
 imgui.ini
+chip8.3dsx
+chip8.elf
+chip8.smdh

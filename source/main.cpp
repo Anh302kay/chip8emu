@@ -8,6 +8,8 @@
 
 #ifdef __PC
 #include "platformSDL.hpp"
+#elif __3DS__
+#include "platformCTR.hpp"
 #endif
 
 
@@ -16,7 +18,7 @@ int main(int argc, char* argv[])
     platformClass platform;
 
     Chip8 chip8;
-    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
+    chip8.loadROM("/Breakout (Brix hack) [David Winter, 1997].ch8");
 
     bool gameRunning = true;
     auto previous = std::chrono::high_resolution_clock::now();

@@ -43,9 +43,9 @@
                 "E:\\msys64\\opt\\devkitpro\\libctru\\include\\**",
                 "E:\\msys64\\opt\\devkitpro\\portlibs\\3ds\\include\\**",
                 "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\**",
-                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\14.2.0",
-                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\14.2.0\\arm-none-eabi",
-                "E:\\msys64\\opt\\devkitpro\\devkitARM\\lib\\gcc\\arm-none-eabi\\14.2.0\\include"
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\15.1.0",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\arm-none-eabi\\include\\c++\\15.1.0\\arm-none-eabi",
+                "E:\\msys64\\opt\\devkitpro\\devkitARM\\lib\\gcc\\arm-none-eabi\\15.1.0\\include"
             ],
             "defines": [
                 "_DEBUG",

@@ -58,10 +58,6 @@
                 "ignoreFailures": true
             }
         ],
-        // "startupCmds": [
-        //     "target remote localhost:4003",
-        //     "c"
-        // ],
         "preLaunchTask": "run-azahar"
     }
     ]

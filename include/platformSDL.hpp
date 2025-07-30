@@ -24,10 +24,12 @@ public:
     void endFrame();
     void drawUI(Chip8& chip8, int& timeStep);
 private:
-    bool blackPalette = false;
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* screen;
     SDL_AudioSpec spec;
     SDL_AudioStream* stream;
+    bool blackPalette = false;
+    bool settingsOpened = true;
+    int scale = 20.f;
 };

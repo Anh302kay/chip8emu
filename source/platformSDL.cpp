@@ -1,3 +1,4 @@
+#ifdef __PC
 #include <iostream>
 #include <SDL3/SDL.h>
 #include "platformSDL.hpp"
@@ -112,6 +113,10 @@ void platformSDL::processInput(Chip8& chip8, bool& gameRunning)
             chip8.reset();
             chip8.loadROM(e.drop.data);
         }
+        if(e.type == SDL_EVENT_KEY_DOWN) {
+            if(e.key.key == SDLK_M)
+                settingsOpened = !settingsOpened;
+        }
     }
 
     const bool* keystate = SDL_GetKeyboardState(NULL);
@@ -169,6 +174,10 @@ void platformSDL::render(uint8_t* videoRam)
 
 void platformSDL::drawUI(Chip8& chip8, int& timeStep)
 {
+
+    if(!settingsOpened)
+        return;
+
     static int test;
 
     int r = (chip8.palette & 0b11100000) >> 5;
@@ -177,11 +186,14 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
     bool paletteChanged = false;
 
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
-    ImGui::Begin("Settings");
+    ImGui::Begin("Settings", &settingsOpened);
     if(ImGui::Button("Reset"))
         chip8.reset();
         
     ImGui::DragInt("Timescale", &timeStep, 25, 1, 10000000, "%dus", ImGuiSliderFlags_AlwaysClamp);
+    if(ImGui::SliderInt("##Scale", &scale, 1.f, 40.f, "Scale:%d", ImGuiSliderFlags_ClampOnInput)) {
+        SDL_SetWindowSize(window, 64 * scale, 32 * scale);
+    }
 
     ImGui::Text("Pixel Colour");
     ImGui::SetNextItemWidth(75);
@@ -214,3 +226,4 @@ void platformSDL::endFrame()
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);
 }
+#endif
