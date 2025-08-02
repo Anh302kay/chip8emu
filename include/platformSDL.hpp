@@ -15,6 +15,9 @@ public:
     platformSDL();
     ~platformSDL();
 
+    void loadRom(Chip8& chip8, bool& gameRunning);
+    void loadRomDialog(Chip8& chip8);
+
     void processInput(bool* keypad);
     void processInput(Chip8& chip8, bool& gameRunning);
     void playSound();

@@ -18,9 +18,11 @@ int main(int argc, char* argv[])
     platformClass platform;
 
     Chip8 chip8;
-    chip8.loadROM("/Breakout (Brix hack) [David Winter, 1997].ch8");
+    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
 
     bool gameRunning = true;
+    // platform.loadRom(chip8, gameRunning);
+
     auto previous = std::chrono::high_resolution_clock::now();
     auto current = previous;
 

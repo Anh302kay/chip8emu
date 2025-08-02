@@ -4,6 +4,9 @@
 #include "platformSDL.hpp"
 
 #include "icon.h"
+#include "output.hpp"
+
+static bool fileSelected = false;
 
 static void audioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
@@ -76,6 +79,58 @@ platformSDL::~platformSDL()
     ImGui::DestroyContext();
     SDL_DestroyTexture(screen);
     SDL_Quit();
+}
+
+void platformSDL::loadRom(Chip8& chip8, bool& gameRunning)
+{
+    SDL_Surface* surface;
+    if(SDL_LockTextureToSurface(screen, NULL, &surface)) {
+        memcpy(surface->pixels, loadROM_bin, loadROM_size);
+        SDL_UnlockTexture(screen);
+        surface = nullptr;
+    }
+    startFrame();
+    SDL_RenderTexture(renderer, screen, NULL, NULL);
+    endFrame(); 
+    while(!fileSelected)
+    {
+        SDL_Event e;
+        while(SDL_PollEvent(&e)) {
+            ImGui_ImplSDL3_ProcessEvent(&e);
+            if(e.type == SDL_EVENT_QUIT) {
+                gameRunning = false;
+                fileSelected = true;
+            }
+            if(e.type == SDL_EVENT_DROP_FILE) {
+                chip8.reset();
+                chip8.loadROM(e.drop.data);
+            }
+            if(e.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+                loadRomDialog(chip8);
+        }
+
+    }
+
+}
+
+void platformSDL::loadRomDialog(Chip8& chip8)
+{
+    SDL_ShowOpenFileDialog([](void *userdata, const char * const *filelist, int filter){
+        if (!filelist) {
+            std::cout << "An error occured:" << SDL_GetError() << "\n";
+            return;
+        } else if (!*filelist) {
+            std::cout << "cancelled load\n";
+            return;
+        }
+
+        Chip8* chip8 = (Chip8*)userdata;
+        chip8->loadROM(*filelist);
+        chip8->reset();
+        fileSelected = true;
+
+    }, &chip8, window, nullptr, 0, ".\\", false
+    );
 }
 
 
@@ -167,9 +222,6 @@ void platformSDL::render(uint8_t* videoRam)
     }
     if(!blackPalette)
         SDL_RenderTexture(renderer, screen, NULL, NULL);
-    static bool window = true;
-    if(window)
-        ImGui::ShowDemoWindow(&window);
 }
 
 void platformSDL::drawUI(Chip8& chip8, int& timeStep)
@@ -178,8 +230,6 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
     if(!settingsOpened)
         return;
 
-    static int test;
-
     int r = (chip8.palette & 0b11100000) >> 5;
     int g = (chip8.palette & 0b00011100) >> 2;
     int b = (chip8.palette & 0b00000011);
@@ -187,6 +237,11 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
 
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
     ImGui::Begin("Settings", &settingsOpened);
+
+    if(ImGui::Button("Load ROM"))
+        loadRomDialog(chip8);
+
+    ImGui::SameLine();
     if(ImGui::Button("Reset"))
         chip8.reset();
         

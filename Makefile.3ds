@@ -39,10 +39,10 @@ DATA		:=	data
 INCLUDES	:=	include 
 GRAPHICS	:=	gfx
 #GFXBUILD	:=	$(BUILD)
-#ROMFS		:=	romfs
+ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-APP_TITLE   := threedeez
-APP_DESCRIPTION := threedeez NUTS IN YO
+APP_TITLE   := Chip 8 Emulator
+APP_DESCRIPTION := A Chip 8 emulator
 APP_AUTHOR  := Anh302kay
 #ICON := icon.png
 

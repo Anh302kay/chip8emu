@@ -27,4 +27,6 @@ private:
     C3D_RenderTarget* top;
     C3D_RenderTarget* bottom;
     C2D_Image img;
+    int scale;
+    ndspWaveBuf waveBuffer;
 };
