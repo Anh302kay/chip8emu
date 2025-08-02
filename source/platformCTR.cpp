@@ -17,6 +17,13 @@ static constexpr size_t posToTex(u16 index)
     return ((((y >> 3) * (width >> 3) + (x >> 3)) << 6) + ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) | ((x & 4) << 2) | ((y & 4) << 3)));
 }
 
+static void fillBuffer(s8* buffer, int size) {
+    for(int i = 0; i < size; i++) {
+        buffer[i] = sinf((float)i*3.14/8.f) > 0 ? -50 : 50;
+    }
+    DSP_FlushDataCache(buffer, size);
+}
+
 platformCTR::platformCTR()
 {
     gfxInitDefault();
@@ -36,6 +43,22 @@ platformCTR::platformCTR()
     subtex->right = 1.f;
     img.subtex = subtex;
 
+    ndspInit();
+    ndspSetOutputMode(NDSP_OUTPUT_MONO);
+    ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
+    ndspChnSetRate(0, 8000);
+    ndspChnSetFormat(0, NDSP_FORMAT_MONO_PCM8);
+
+    float mix[12];
+    memset(mix, 0, sizeof(mix));
+    mix[0] = 1.f;
+    ndspChnSetMix(0, mix);
+
+    waveBuffer.nsamples = 8000;
+    s8* audioBuffer = (s8*)linearAlloc(waveBuffer.nsamples);
+    waveBuffer.data_pcm8 = audioBuffer;
+    
+    fillBuffer(audioBuffer, waveBuffer.nsamples);
 }
 
 platformCTR::~platformCTR()
@@ -48,21 +71,29 @@ platformCTR::~platformCTR()
     gfxExit();
 }
 
+void loadRom(Chip8& chip8, bool& gameRunning)
+{
+
+}
+
 void platformCTR::processInput(bool* keypad)
 {
 
 }
 void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
 {
-
+    gameRunning = aptMainLoop();
 }
 void platformCTR::playSound()
 {
+    if(waveBuffer.status != NDSP_WBUF_PLAYING)
+        ndspChnWaveBufAdd(0, &waveBuffer);
 
+    ndspChnSetPaused(0, false);
 }
 void platformCTR::stopSound()
 {
-
+    ndspChnSetPaused(0, true);
 }
 void platformCTR::startFrame()
 {

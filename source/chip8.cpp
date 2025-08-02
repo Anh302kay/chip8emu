@@ -73,6 +73,7 @@ void Chip8::loadROM(const char* filename)
 
     file.close();
     std::cout << "file loaded successfully\n";
+    ROM = filename;
     PC = startAddress;
 }
 

@@ -35,10 +35,10 @@ int main(int argc, char* argv[])
         accumulator += current - previous;
 
         while(accumulator > std::chrono::microseconds(timeStep)) {
+            platform.processInput(chip8, gameRunning);
+
             if(!gameRunning)
                 break;
-
-            platform.processInput(chip8, gameRunning);
 
             if(chip8.soundTimer > 0)
                 platform.playSound();

@@ -89,9 +89,9 @@ void platformSDL::loadRom(Chip8& chip8, bool& gameRunning)
         SDL_UnlockTexture(screen);
         surface = nullptr;
     }
-    startFrame();
+    SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, screen, NULL, NULL);
-    endFrame(); 
+    SDL_RenderPresent(renderer);
     while(!fileSelected)
     {
         SDL_Event e;

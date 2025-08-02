@@ -14,6 +14,8 @@ public:
     platformCTR();
     ~platformCTR();
 
+    void loadRom(Chip8& chip8, bool& gameRunning);
+
     void processInput(bool* keypad);
     void processInput(Chip8& chip8, bool& gameRunning);
     void playSound();

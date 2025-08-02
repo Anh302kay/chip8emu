@@ -29,6 +29,7 @@ struct Chip8 {
     
     std::mt19937 rnd;
     uint8_t palette = 255;
+    std::string ROM;
 
     Chip8();
 
