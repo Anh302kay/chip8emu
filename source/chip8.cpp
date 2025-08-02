@@ -94,6 +94,8 @@ void Chip8::changePalette(uint8_t newPalette)
 
 void Chip8::execIns()
 {
+    if(paused)
+        return;
     uint16_t opcode = memory[PC] << 8 | memory[PC+1];
     PC += 2;
 

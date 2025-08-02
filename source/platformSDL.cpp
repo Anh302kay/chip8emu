@@ -238,8 +238,14 @@ void platformSDL::drawUI(Chip8& chip8, int& timeStep)
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
     ImGui::Begin("Settings", &settingsOpened);
 
+    ImGui::Text("%s", chip8.ROM.c_str());
+
     if(ImGui::Button("Load ROM"))
         loadRomDialog(chip8);
+
+    ImGui::SameLine();
+    if(ImGui::Button(chip8.paused ? "Unpause" : "Pause"))
+        chip8.paused = !chip8.paused;
 
     ImGui::SameLine();
     if(ImGui::Button("Reset"))

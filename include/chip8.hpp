@@ -27,6 +27,7 @@ struct Chip8 {
     uint16_t stack[16] = {0};
     bool keypad[16] = {false};
     
+    bool paused = false;
     std::mt19937 rnd;
     uint8_t palette = 255;
     std::string ROM;
