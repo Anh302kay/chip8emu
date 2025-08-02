@@ -37,8 +37,10 @@ platformCTR::platformCTR()
     bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 
     screen.tex = new C3D_Tex;
-    C3D_TexInitVRAM(screen.tex, 64, 32, GPU_RGB565);
+    C3D_TexInit(screen.tex, 64, 32, GPU_RGB565);
     C3D_TexSetFilter(screen.tex, GPU_NEAREST, GPU_NEAREST);
+    // GX_MemoryFill((u32*)screen.tex, 0, (u32*)(screen.tex+64*32*2), GX_FILL_16BIT_DEPTH | GX_FILL_TRIGGER, NULL, 0, NULL, 0);
+    // gspWaitForPSC0();
     Tex3DS_SubTexture* subtex = new Tex3DS_SubTexture;
     subtex->width = 64;
     subtex->height = 32;

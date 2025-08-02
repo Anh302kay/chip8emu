@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
     platformClass platform;
 
     Chip8 chip8;
-    chip8.loadROM("Breakout (Brix hack) [David Winter, 1997].ch8");
+    chip8.loadROM("/Breakout (Brix hack) [David Winter, 1997].ch8");
 
     bool gameRunning = true;
     // platform.loadRom(chip8, gameRunning);
@@ -54,6 +54,9 @@ int main(int argc, char* argv[])
         platform.drawUI(chip8, timeStep);
 
         platform.endFrame();
+#ifdef __3DS__
+        gameRunning = aptMainLoop();
+#endif
     }
 
     return 0;
