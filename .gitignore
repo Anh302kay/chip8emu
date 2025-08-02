@@ -2,7 +2,7 @@ build/*.*
 build3ds/*.*
 bin/debug
 bin/release
-res/*.*
+romfs/*.*
 *.ch8
 imgui.ini
 chip8.3dsx
