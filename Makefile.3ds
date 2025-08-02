@@ -44,7 +44,7 @@ GFXBUILD	:=	$(ROMFS)/gfx
 APP_TITLE   := Chip 8 Emulator
 APP_DESCRIPTION := A Chip 8 emulator
 APP_AUTHOR  := Anh302kay
-#ICON := icon.png
+ICON := icon.png
 
 #---------------------------------------------------------------------------------
 # options for code generation

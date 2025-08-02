@@ -25,10 +25,16 @@ public:
     void endFrame();
     void drawUI(Chip8& chip8, int& timeStep);
 private:
-    bool blackPalette = false;
     C3D_RenderTarget* top;
     C3D_RenderTarget* bottom;
-    C2D_Image img;
-    int scale;
+    C2D_Image screen;
+
+    C2D_Text keypadText[16];
+    C2D_TextBuf textBuf;
+    C2D_Font font;
     ndspWaveBuf waveBuffer;
+    touchPosition touch;
+
+    bool blackPalette = false;
+    int scale;
 };

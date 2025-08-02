@@ -7,6 +7,8 @@
 #include "chip8.hpp"
 #include "platformCTR.hpp"
 
+constexpr u8 textLookup[16] = { 1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0, 0xB, 0xF};
+
 static constexpr size_t posToTex(u16 index) 
 {
     constexpr int width = 64;
@@ -17,31 +19,40 @@ static constexpr size_t posToTex(u16 index)
     return ((((y >> 3) * (width >> 3) + (x >> 3)) << 6) + ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) | ((x & 4) << 2) | ((y & 4) << 3)));
 }
 
-static void fillBuffer(s8* buffer, int size) {
+static constexpr void fillBuffer(s8* buffer, int size) {
     for(int i = 0; i < size; i++) {
         buffer[i] = sinf((float)i*3.14/8.f) > 0 ? -50 : 50;
     }
-    DSP_FlushDataCache(buffer, size);
 }
 
 platformCTR::platformCTR()
 {
     gfxInitDefault();
+    romfsInit();
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
     C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
     C2D_Prepare();
     
     top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
+    bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 
-    img.tex = new C3D_Tex;
-    C3D_TexInitVRAM(img.tex, 64, 32, GPU_RGB565);
-    C3D_TexSetFilter(img.tex, GPU_NEAREST, GPU_NEAREST);
+    screen.tex = new C3D_Tex;
+    C3D_TexInitVRAM(screen.tex, 64, 32, GPU_RGB565);
+    C3D_TexSetFilter(screen.tex, GPU_NEAREST, GPU_NEAREST);
     Tex3DS_SubTexture* subtex = new Tex3DS_SubTexture;
     subtex->width = 64;
     subtex->height = 32;
     subtex->top = 1.f;
     subtex->right = 1.f;
-    img.subtex = subtex;
+    screen.subtex = subtex;
+
+    font = C2D_FontLoad("romfs:gfx/GravityBold8.bcfnt");
+    textBuf = C2D_TextBufNew(4096);
+    for(int i = 0; i < 16; i++) {
+        std::string num = std::format("{:x}", i);
+        C2D_TextFontParse(&keypadText[i], font, textBuf, num.c_str());
+        C2D_TextOptimize(&keypadText[i]);
+    }
 
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
@@ -59,13 +70,18 @@ platformCTR::platformCTR()
     waveBuffer.data_pcm8 = audioBuffer;
     
     fillBuffer(audioBuffer, waveBuffer.nsamples);
+    DSP_FlushDataCache(audioBuffer, waveBuffer.nsamples);
+
+
 }
 
 platformCTR::~platformCTR()
 {
-    C3D_TexDelete(img.tex);
-    delete img.subtex;
-    delete img.tex;
+    C2D_FontFree(font);
+    C2D_TextBufDelete(textBuf);
+    C3D_TexDelete(screen.tex);
+    delete screen.subtex;
+    delete screen.tex;
     C2D_Fini();
     C3D_Fini();
     gfxExit();
@@ -83,6 +99,33 @@ void platformCTR::processInput(bool* keypad)
 void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
 {
     gameRunning = aptMainLoop();
+    if(!gameRunning)
+        return;
+    hidScanInput();
+    hidTouchRead(&touch);
+    const u32 kDown = hidKeysDown();
+    const u32 kHeld = hidKeysHeld();
+    bool* keypad = chip8.keypad;
+
+    memset(keypad, 0, 16);
+
+    keypad[2] = kHeld & KEY_UP;
+    keypad[8] = kHeld & KEY_DOWN;
+    keypad[4] = kHeld & KEY_LEFT;
+    keypad[6] = kHeld & KEY_RIGHT;
+
+    if(!kHeld)
+        return;
+    for(int i = 0; i < 16; i++)
+    {
+        const int x = (i%4);
+        const int y = (i/4);
+        const int xPos = 20+x*60;
+        const int yPos = y * 40 + y * 11 + 11;
+        if(touch.px > xPos && touch.px < xPos+40 && touch.py > yPos && touch.py < yPos+40)
+            keypad[textLookup[i]] = true;
+    }
+    
 }
 void platformCTR::playSound()
 {
@@ -103,12 +146,12 @@ void platformCTR::startFrame()
 }
 void platformCTR::render(uint8_t* videoRam)
 {
-    // memcpy(img.tex, videoRam, 2048);
-    u16* texData = (u16*)img.tex->data; 
+    // memcpy(screen.tex, videoRam, 2048);
+    u16* texData = (u16*)screen.tex->data; 
     for(int i = 0; i < 2048; i++) {
         texData[posToTex(i)] = videoRam[i] == 255 ? 0xFFFF : 0;
     }
-    C2D_DrawImageAt(img, 0, 0, 0, nullptr, 5.f, 5.f);
+    C2D_DrawImageAt(screen, 0, 0, 0, nullptr, 5.f, 5.f);
 }
 void platformCTR::endFrame()
 {
@@ -117,6 +160,24 @@ void platformCTR::endFrame()
 
 void platformCTR::drawUI(Chip8& chip8, int& timeStep)
 {
+    C2D_TargetClear(bottom, C2D_Color32f(0.0f, 0.0f, 0.0f, 1.0f));
+    C2D_SceneBegin(bottom);
+    
+    constexpr u32 white = C2D_Color32(255,255,255,255);
+    constexpr u32 black = C2D_Color32(0,0,0,255);
+    for(int i = 0; i < 16; i++)
+    {
+        constexpr int outlineSize = 2;
+        const int x = (i%4);
+        const int y = (i/4);
+        const int xPos = 20+x*60;
+        const int yPos = y * 40 + y * 11 + 11;
+        C2D_DrawRectSolid(xPos, yPos, 0, 40, 40, white);
+        C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2, 40-outlineSize*2, black);
+        C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20, yPos+30, 0, 1.f, 1.f, white);
+    }
+
+    C2D_DrawLine(0, 215, white, 320, 215, white, 1, 0);
 
 }
 #endif
