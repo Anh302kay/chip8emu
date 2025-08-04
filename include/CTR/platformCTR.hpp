@@ -8,6 +8,13 @@
 
 #define platformClass platformCTR
 
+enum 
+{
+    BUTTON_RESET = 0,
+    BUTTON_PAUSE,
+    NUMBUTTONS = 2
+};
+
 class platformCTR : platform
 {
 public:
@@ -30,7 +37,8 @@ private:
     C2D_Image screen;
 
     C2D_Text keypadText[16];
-    C2D_TextBuf textBuf;
+    C2D_Text buttons[NUMBUTTONS];
+    C2D_TextBuf textUIBuf;
     C2D_Font font;
     ndspWaveBuf waveBuffer;
     touchPosition touch;

@@ -49,12 +49,18 @@ platformCTR::platformCTR()
     screen.subtex = subtex;
 
     font = C2D_FontLoad("romfs:gfx/GravityBold8.bcfnt");
-    textBuf = C2D_TextBufNew(4096);
+    textUIBuf = C2D_TextBufNew(4096);
     for(int i = 0; i < 16; i++) {
         std::string num = std::format("{:x}", i);
-        C2D_TextFontParse(&keypadText[i], font, textBuf, num.c_str());
+        C2D_TextFontParse(&keypadText[i], font, textUIBuf, num.c_str());
         C2D_TextOptimize(&keypadText[i]);
     }
+
+    C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
+    C2D_TextOptimize(&buttons[BUTTON_RESET]);
+
+    C2D_TextFontParse(&buttons[BUTTON_PAUSE], font, textUIBuf, "PAUSE");
+    C2D_TextOptimize(&buttons[BUTTON_PAUSE]);
 
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
@@ -80,7 +86,7 @@ platformCTR::platformCTR()
 platformCTR::~platformCTR()
 {
     C2D_FontFree(font);
-    C2D_TextBufDelete(textBuf);
+    C2D_TextBufDelete(textUIBuf);
     C3D_TexDelete(screen.tex);
     delete screen.subtex;
     delete screen.tex;
@@ -166,19 +172,21 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     C2D_SceneBegin(bottom);
     
     constexpr u32 white = C2D_Color32(255,255,255,255);
+    constexpr u32 grey = C2D_Color32(190,190,190,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
     for(int i = 0; i < 16; i++)
     {
+        const int scale = chip8.keypad[textLookup[i]] * 5;
         constexpr int outlineSize = 2;
         const int x = (i%4);
         const int y = (i/4);
-        const int xPos = 20+x*60;
-        const int yPos = y * 40 + y * 11 + 11;
-        C2D_DrawRectSolid(xPos, yPos, 0, 40, 40, white);
-        C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2, 40-outlineSize*2, black);
-        C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20, yPos+30, 0, 1.f, 1.f, white);
+        const int xPos = 20+x*60- scale/2;
+        const int yPos = y * 40 + y * 11 + 11 - scale/2;
+        C2D_DrawRectSolid(xPos, yPos, 0, 40 + scale, 40 + scale, white);
+        C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2 +scale, 40-outlineSize*2 +scale, black);
+        C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20 + scale/2, yPos+30 + scale , 0, 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , white);
     }
-
+    C2D_DrawText(&buttons[BUTTON_PAUSE], C2D_WithColor | C2D_AlignCenter, 60, 217, 0, .75f, .75f, grey);
     C2D_DrawLine(0, 215, white, 320, 215, white, 1, 0);
 
 }
