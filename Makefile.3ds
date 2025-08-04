@@ -34,9 +34,9 @@ PORTLIBS    := $(DEVKITPRO)/portlibs/3ds
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build3ds
-SOURCES		:=	source
+SOURCES		:=	source source/CTR
 DATA		:=	data
-INCLUDES	:=	include 
+INCLUDES	:=	include include/CTR
 GRAPHICS	:=	gfx
 #GFXBUILD	:=	$(BUILD)
 ROMFS		:=	romfs

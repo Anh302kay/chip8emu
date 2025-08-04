@@ -1,8 +1,8 @@
 CC=g++
 CFLAGS = -Wall -c -std=c++20 -g -D__PC
-INCLUDES = include include/external
+INCLUDES = include include/external include/SDL
 INCFLAGS = $(addprefix -I, $(INCLUDES))
-SOURCES  = source include/external
+SOURCES  = source include/external source/SDL
 BUILD = build
 LIBS = -lmingw32 -lgdi32 -lopengl32 -limm32 -lSDL3 
 

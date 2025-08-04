@@ -58,7 +58,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "run-azahar"
+        // "preLaunchTask": "run-azahar"
     }
     ]
 }

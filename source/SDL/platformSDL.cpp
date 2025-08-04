@@ -1,4 +1,3 @@
-#ifdef __PC
 #include <iostream>
 #include <SDL3/SDL.h>
 #include "platformSDL.hpp"
@@ -287,4 +286,3 @@ void platformSDL::endFrame()
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);
 }
-#endif
