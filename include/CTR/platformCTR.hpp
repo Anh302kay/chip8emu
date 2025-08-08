@@ -15,6 +15,14 @@ enum
     NUMBUTTONS = 2
 };
 
+enum
+{
+    MENU_KEYPAD,
+    MENU_COLOURS,
+    MENU_SETTINGS,
+    MENU_FILE
+};
+
 class platformCTR : platform
 {
 public:
@@ -45,4 +53,5 @@ private:
 
     bool blackPalette = false;
     int scale;
+    u8 settings = MENU_KEYPAD;
 };

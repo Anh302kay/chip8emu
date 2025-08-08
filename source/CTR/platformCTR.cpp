@@ -2,6 +2,7 @@
 #include <3ds.h>
 #include <citro3d.h>
 #include <citro2d.h>
+#include <filesystem>
 #include "platform.hpp"
 
 #include "chip8.hpp"
@@ -24,6 +25,11 @@ static constexpr void fillBuffer(s8* buffer, int size) {
         buffer[i] = sinf((float)i*3.14/8.f) > 0 ? -50 : 50;
     }
 }
+
+template <typename T1, typename T2>
+static constexpr bool touchedBox(const touchPosition& touch, const T1 x, const T1 y, const T2 w, const T2 h) {
+    return touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
+}  
 
 platformCTR::platformCTR()
 {
@@ -113,6 +119,16 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
     hidTouchRead(&touch);
     const u32 kDown = hidKeysDown();
     const u32 kHeld = hidKeysHeld();
+
+    if(kDown & KEY_TOUCH) {
+        float width = 0.f;
+        float height = 0.f;
+        C2D_TextGetDimensions(&buttons[BUTTON_RESET], 0.75f, 0.5f, &width, &height);
+        if(touchedBox(touch, 30, 217, width, height))
+            chip8.paused = !chip8.paused;
+
+    }
+
     bool* keypad = chip8.keypad;
 
     memset(keypad, 0, 16);
@@ -124,13 +140,14 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
 
     if(!kHeld)
         return;
+        
     for(int i = 0; i < 16; i++)
     {
         const int x = (i%4);
         const int y = (i/4);
         const int xPos = 20+x*60;
         const int yPos = y * 40 + y * 11 + 11;
-        if(touch.px > xPos && touch.px < xPos+40 && touch.py > yPos && touch.py < yPos+40)
+        if(touchedBox(touch, xPos, yPos, 40, 40))
             keypad[textLookup[i]] = true;
     }
     
@@ -170,10 +187,12 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
 {
     C2D_TargetClear(bottom, C2D_Color32f(0.0f, 0.0f, 0.0f, 1.0f));
     C2D_SceneBegin(bottom);
-    
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(190,190,190,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
+
+    std::filesystem::path p{"/"};
+
     for(int i = 0; i < 16; i++)
     {
         const int scale = chip8.keypad[textLookup[i]] * 5;
@@ -186,7 +205,8 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
         C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2 +scale, 40-outlineSize*2 +scale, black);
         C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20 + scale/2, yPos+30 + scale , 0, 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , white);
     }
-    C2D_DrawText(&buttons[BUTTON_PAUSE], C2D_WithColor | C2D_AlignCenter, 60, 217, 0, .75f, .75f, grey);
+    C2D_DrawText(&buttons[BUTTON_PAUSE], C2D_WithColor, 30, 217, 0, .75f, .75f, grey);
+    C2D_DrawText(&buttons[BUTTON_RESET], C2D_WithColor, 200, 217, 0, .75f, .75f, grey);
     C2D_DrawLine(0, 215, white, 320, 215, white, 1, 0);
 
 }

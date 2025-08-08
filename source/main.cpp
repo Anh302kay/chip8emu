@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     auto current = previous;
 
     int timeStep = 2500;
-    std::chrono::duration<double, std::milli> accumulator;
+    std::chrono::duration<double, std::milli> accumulator = std::chrono::milliseconds(0);
 
     while(gameRunning) {
         previous = current;
