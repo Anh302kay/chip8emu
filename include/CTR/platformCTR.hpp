@@ -12,7 +12,8 @@ enum
 {
     BUTTON_RESET = 0,
     BUTTON_PAUSE,
-    NUMBUTTONS = 2
+    BUTTON_UNPAUSE,
+    NUMBUTTONS = 3
 };
 
 enum
@@ -52,6 +53,6 @@ private:
     touchPosition touch;
 
     bool blackPalette = false;
-    int scale;
+    float scale = 5.f;
     u8 settings = MENU_KEYPAD;
 };

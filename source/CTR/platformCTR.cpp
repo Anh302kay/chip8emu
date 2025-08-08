@@ -13,7 +13,6 @@ constexpr u8 textLookup[16] = { 1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0
 static constexpr size_t posToTex(u16 index) 
 {
     constexpr int width = 64;
-    constexpr int height = 32;
     const int x = index % 64;
     const int y = index / 64;
 
@@ -45,8 +44,7 @@ platformCTR::platformCTR()
     screen.tex = new C3D_Tex;
     C3D_TexInit(screen.tex, 64, 32, GPU_RGB565);
     C3D_TexSetFilter(screen.tex, GPU_NEAREST, GPU_NEAREST);
-    // GX_MemoryFill((u32*)screen.tex, 0, (u32*)(screen.tex+64*32*2), GX_FILL_16BIT_DEPTH | GX_FILL_TRIGGER, NULL, 0, NULL, 0);
-    // gspWaitForPSC0();
+
     Tex3DS_SubTexture* subtex = new Tex3DS_SubTexture;
     subtex->width = 64;
     subtex->height = 32;
@@ -68,6 +66,9 @@ platformCTR::platformCTR()
     C2D_TextFontParse(&buttons[BUTTON_PAUSE], font, textUIBuf, "PAUSE");
     C2D_TextOptimize(&buttons[BUTTON_PAUSE]);
 
+    C2D_TextFontParse(&buttons[BUTTON_UNPAUSE], font, textUIBuf, "UNPAUSE");
+    C2D_TextOptimize(&buttons[BUTTON_UNPAUSE]);
+
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -85,7 +86,6 @@ platformCTR::platformCTR()
     
     fillBuffer(audioBuffer, waveBuffer.nsamples);
     DSP_FlushDataCache(audioBuffer, waveBuffer.nsamples);
-
 
 }
 
@@ -123,33 +123,48 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
     if(kDown & KEY_TOUCH) {
         float width = 0.f;
         float height = 0.f;
-        C2D_TextGetDimensions(&buttons[BUTTON_RESET], 0.75f, 0.5f, &width, &height);
+        C2D_TextGetDimensions(&buttons[chip8.paused ? BUTTON_UNPAUSE : BUTTON_PAUSE], 0.75f, 0.5f, &width, &height);
         if(touchedBox(touch, 30, 217, width, height))
             chip8.paused = !chip8.paused;
 
-    }
+        C2D_TextGetDimensions(&buttons[BUTTON_RESET], 0.75f, 0.5f, &width, &height);
+        if(touchedBox(touch, 200, 217, width, height))
+            chip8.reset();
 
-    bool* keypad = chip8.keypad;
-
-    memset(keypad, 0, 16);
-
-    keypad[2] = kHeld & KEY_UP;
-    keypad[8] = kHeld & KEY_DOWN;
-    keypad[4] = kHeld & KEY_LEFT;
-    keypad[6] = kHeld & KEY_RIGHT;
-
-    if(!kHeld)
-        return;
+        for(int i = 0; i < 3; i++) {
+            if(touchedBox(touch, 267, 18+65*i, 47, 47))
+                settings = i;
+        }
         
-    for(int i = 0; i < 16; i++)
-    {
-        const int x = (i%4);
-        const int y = (i/4);
-        const int xPos = 20+x*60;
-        const int yPos = y * 40 + y * 11 + 11;
-        if(touchedBox(touch, xPos, yPos, 40, 40))
-            keypad[textLookup[i]] = true;
+
     }
+
+    bool* keypad = chip8.keypad;    
+    switch(settings) {
+        case MENU_KEYPAD:
+            memset(keypad, 0, 16);
+            keypad[2] = kHeld & KEY_UP;
+            keypad[8] = kHeld & KEY_DOWN;
+            keypad[4] = kHeld & KEY_LEFT;
+            keypad[6] = kHeld & KEY_RIGHT;
+
+            if(!kHeld)
+                return;
+                
+            for(int i = 0; i < 16; i++)
+            {
+                const int x = (i%4);
+                const int y = (i/4);
+                const int xPos = 20+x*60;
+                const int yPos = y * 40 + y * 11 + 11;
+                if(touchedBox(touch, xPos, yPos, 40, 40))
+                    keypad[textLookup[i]] = true;
+            }
+            break;
+        default:
+            break;
+    }
+
     
 }
 void platformCTR::playSound()
@@ -176,7 +191,7 @@ void platformCTR::render(uint8_t* videoRam)
     for(int i = 0; i < 2048; i++) {
         texData[posToTex(i)] = videoRam[i] == 255 ? 0xFFFF : 0;
     }
-    C2D_DrawImageAt(screen, 0, 0, 0, nullptr, 5.f, 5.f);
+    C2D_DrawImageAt(screen, 0, 0, 0, nullptr, scale, scale);
 }
 void platformCTR::endFrame()
 {
@@ -191,23 +206,34 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     constexpr u32 grey = C2D_Color32(190,190,190,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
 
-    std::filesystem::path p{"/"};
-
-    for(int i = 0; i < 16; i++)
-    {
-        const int scale = chip8.keypad[textLookup[i]] * 5;
-        constexpr int outlineSize = 2;
-        const int x = (i%4);
-        const int y = (i/4);
-        const int xPos = 20+x*60- scale/2;
-        const int yPos = y * 40 + y * 11 + 11 - scale/2;
-        C2D_DrawRectSolid(xPos, yPos, 0, 40 + scale, 40 + scale, white);
-        C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2 +scale, 40-outlineSize*2 +scale, black);
-        C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20 + scale/2, yPos+30 + scale , 0, 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , white);
+    switch(settings) {
+        case MENU_KEYPAD:
+            for(int i = 0; i < 16; i++)
+            {
+                const int scale = chip8.keypad[textLookup[i]] * 5;
+                constexpr int outlineSize = 2;
+                const int x = (i%4);
+                const int y = (i/4);
+                const int xPos = 20+x*60- scale/2;
+                const int yPos = y * 40 + y * 11 + 11 - scale/2;
+                C2D_DrawRectSolid(xPos, yPos, 0, 40 + scale, 40 + scale, white);
+                C2D_DrawRectSolid(xPos+outlineSize, yPos+outlineSize, 0, 40-outlineSize*2 +scale, 40-outlineSize*2 +scale, black);
+                C2D_DrawText(&keypadText[textLookup[i]], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, xPos+20 + scale/2, yPos+30 + scale , 0, 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , 1.f * (chip8.keypad[textLookup[i]] ? 1.25f : 1.f) , white);
+            }
+            break;
+        default:
+            break;
     }
-    C2D_DrawText(&buttons[BUTTON_PAUSE], C2D_WithColor, 30, 217, 0, .75f, .75f, grey);
-    C2D_DrawText(&buttons[BUTTON_RESET], C2D_WithColor, 200, 217, 0, .75f, .75f, grey);
-    C2D_DrawLine(0, 215, white, 320, 215, white, 1, 0);
 
+    for(int i = 0; i < 3; i++) {
+        C2D_DrawRectSolid(267,18+65*i , 0, 47, 47, white);
+    }
+    C2D_DrawLine(317, 18+65*settings-5, white, 317, 18+65*settings+52, white, 2, 0);
+
+    C2D_DrawLine(0, 215, white, 320, 215, white, 1, 0);
+    C2D_DrawText(&buttons[chip8.paused ? BUTTON_UNPAUSE : BUTTON_PAUSE], C2D_WithColor, 30, 217, 0, .75f, .75f, grey);
+    C2D_DrawText(&buttons[BUTTON_RESET], C2D_WithColor, 200, 217, 0, .75f, .75f, grey);
+
+    C2D_DrawLine(260, 0, white, 260, 215, white, 2, 0);
 }
 #endif
