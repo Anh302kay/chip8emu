@@ -30,6 +30,16 @@ static constexpr bool touchedBox(const touchPosition& touch, const T1 x, const T
     return touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
 }  
 
+void slider::render(u32 lineColour, u32 sliderColour)
+{
+    const int range = max-min;
+    const float offset = (float)height/(float)range;
+
+    C2D_DrawLine(x+width/2, y, lineColour, x+width/2, y+height, lineColour, 2, 0);
+    C2D_DrawRectSolid(x, y + height - offset*value - 5.f, 0, width , 5, sliderColour);
+
+}
+
 platformCTR::platformCTR()
 {
     gfxInitDefault();
@@ -42,7 +52,7 @@ platformCTR::platformCTR()
     bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 
     screen.tex = new C3D_Tex;
-    C3D_TexInit(screen.tex, 64, 32, GPU_RGB565);
+    C3D_TexInit(screen.tex, 64, 32, GPU_RGBA5551);
     C3D_TexSetFilter(screen.tex, GPU_NEAREST, GPU_NEAREST);
 
     Tex3DS_SubTexture* subtex = new Tex3DS_SubTexture;
@@ -59,6 +69,22 @@ platformCTR::platformCTR()
         C2D_TextFontParse(&keypadText[i], font, textUIBuf, num.c_str());
         C2D_TextOptimize(&keypadText[i]);
     }
+
+    for (int i = 0; i < 3; i++)
+    {
+        RGBslider[i] = {
+            .width = 10,
+            .height = 150,
+            .min = 0,
+            .max = 31,
+            .x = 20 + 50*i,
+            .y = 10,
+            .value = 31 
+        };
+    }
+
+
+    
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
@@ -141,6 +167,19 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
 
     bool* keypad = chip8.keypad;    
     switch(settings) {
+        case MENU_COLOURS:
+            if(kHeld & KEY_TOUCH) {
+                for(slider& slider : RGBslider)
+                if(touchedBox(touch, slider.x-5, slider.y, slider.width+10, slider.height )) {
+                    const int pointY = touch.py - slider.y;
+                    const float range = slider.max-slider.min;
+                    const float offset = slider.height/range;
+                    slider.value = slider.max - pointY/offset;
+                }
+                colour = RGBslider[slider::RED].value << 11 | RGBslider[slider::GREEN].value << 6 | RGBslider[slider::BLUE].value << 1 | 0x1;
+            }
+
+            break;
         case MENU_KEYPAD:
             memset(keypad, 0, 16);
             keypad[2] = kHeld & KEY_UP;
@@ -151,8 +190,7 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(!kHeld)
                 return;
                 
-            for(int i = 0; i < 16; i++)
-            {
+            for(int i = 0; i < 16; i++) {
                 const int x = (i%4);
                 const int y = (i/4);
                 const int xPos = 20+x*60;
@@ -186,10 +224,9 @@ void platformCTR::startFrame()
 }
 void platformCTR::render(uint8_t* videoRam)
 {
-    // memcpy(screen.tex, videoRam, 2048);
     u16* texData = (u16*)screen.tex->data; 
     for(int i = 0; i < 2048; i++) {
-        texData[posToTex(i)] = videoRam[i] == 255 ? 0xFFFF : 0;
+        texData[posToTex(i)] = videoRam[i] == 255 ? colour : 0x1;
     }
     C2D_DrawImageAt(screen, 0, 0, 0, nullptr, scale, scale);
 }
@@ -207,6 +244,11 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     constexpr u32 black = C2D_Color32(0,0,0,255);
 
     switch(settings) {
+        case MENU_COLOURS:
+            // renderSlider(5, 0, 10, 20, 100, 10, 50, white, white);
+            for(int i = 0; i < 3; i++)
+            RGBslider[i].render(white, white);
+            break;
         case MENU_KEYPAD:
             for(int i = 0; i < 16; i++)
             {

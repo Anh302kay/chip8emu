@@ -24,6 +24,21 @@ enum
     MENU_FILE
 };
 
+struct slider
+{
+    int width, height;
+    int min, max;
+    int x, y;
+    int value;
+    void render(u32 lineColour = C2D_Color32(1.f,1.f,1.f,1.f), u32 sliderColour = C2D_Color32(1.f,1.f,1.f,1.f));
+    enum
+    {
+        RED,
+        GREEN,
+        BLUE
+    };
+
+};
 class platformCTR : platform
 {
 public:
@@ -51,8 +66,10 @@ private:
     C2D_Font font;
     ndspWaveBuf waveBuffer;
     touchPosition touch;
+    slider RGBslider[3];
+    
 
-    bool blackPalette = false;
     float scale = 5.f;
+    u16 colour;
     u8 settings = MENU_KEYPAD;
 };
