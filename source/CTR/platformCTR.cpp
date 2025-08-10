@@ -40,6 +40,16 @@ void slider::render(u32 lineColour, u32 sliderColour)
 
 }
 
+void platformCTR::parseString(C2D_Text& text, const char* str)
+{
+    if(C2D_TextFontParse(&text, font, textBuf, str) != 0) {
+        C2D_TextBufClear(textBuf);
+        C2D_TextFontParse(&text, font, textBuf, str);
+    }
+    C2D_TextOptimize(&text);
+}
+
+
 platformCTR::platformCTR()
 {
     gfxInitDefault();
@@ -63,15 +73,16 @@ platformCTR::platformCTR()
     screen.subtex = subtex;
 
     font = C2D_FontLoad("romfs:gfx/GravityBold8.bcfnt");
-    textUIBuf = C2D_TextBufNew(4096);
+    textUIBuf = C2D_TextBufNew(128);
     for(int i = 0; i < 16; i++) {
         std::string num = std::format("{:x}", i);
         C2D_TextFontParse(&keypadText[i], font, textUIBuf, num.c_str());
         C2D_TextOptimize(&keypadText[i]);
     }
 
-    for (int i = 0; i < 3; i++)
-    {
+    textBuf = C2D_TextBufNew(1024);
+
+    for (int i = 0; i < 3; i++) {
         RGBslider[i] = {
             .width = 10,
             .height = 150,
@@ -82,9 +93,6 @@ platformCTR::platformCTR()
             .value = 31 
         };
     }
-
-
-    
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
@@ -161,7 +169,6 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(touchedBox(touch, 267, 18+65*i, 47, 47))
                 settings = i;
         }
-        
 
     }
 
@@ -170,13 +177,14 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
         case MENU_COLOURS:
             if(kHeld & KEY_TOUCH) {
                 for(slider& slider : RGBslider)
-                if(touchedBox(touch, slider.x-5, slider.y, slider.width+10, slider.height )) {
+                if(touchedBox(touch, slider.x-10, slider.y-10, slider.width+20, slider.height+10 )) {
                     const int pointY = touch.py - slider.y;
                     const float range = slider.max-slider.min;
                     const float offset = slider.height/range;
                     slider.value = slider.max - pointY/offset;
+                    slider.value = slider.value > slider.max ? slider.max : slider.value < slider.min ? slider.max : slider.value; // limit to range
+                    colour = RGBslider[slider::RED].value << 11 | RGBslider[slider::GREEN].value << 6 | RGBslider[slider::BLUE].value << 1 | 0x1;
                 }
-                colour = RGBslider[slider::RED].value << 11 | RGBslider[slider::GREEN].value << 6 | RGBslider[slider::BLUE].value << 1 | 0x1;
             }
 
             break;
@@ -245,9 +253,12 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
 
     switch(settings) {
         case MENU_COLOURS:
-            // renderSlider(5, 0, 10, 20, 100, 10, 50, white, white);
-            for(int i = 0; i < 3; i++)
-            RGBslider[i].render(white, white);
+            for(int i = 0; i < 3; i++) {
+                RGBslider[i].render(white, white);
+                C2D_Text value;
+                parseString(value, std::to_string(RGBslider[i].value).c_str());
+                C2D_DrawText(&value, C2D_WithColor | C2D_AlignCenter, RGBslider[i].x+10, RGBslider[i].y + RGBslider[i].height + 20, 0, .75f, .75f, white);
+            }
             break;
         case MENU_KEYPAD:
             for(int i = 0; i < 16; i++)

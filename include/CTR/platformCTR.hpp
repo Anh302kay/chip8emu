@@ -56,6 +56,7 @@ public:
     void endFrame();
     void drawUI(Chip8& chip8, int& timeStep);
 private:
+    void parseString(C2D_Text& text, const char* str);
     C3D_RenderTarget* top;
     C3D_RenderTarget* bottom;
     C2D_Image screen;
@@ -63,6 +64,7 @@ private:
     C2D_Text keypadText[16];
     C2D_Text buttons[NUMBUTTONS];
     C2D_TextBuf textUIBuf;
+    C2D_TextBuf textBuf;
     C2D_Font font;
     ndspWaveBuf waveBuffer;
     touchPosition touch;
@@ -70,6 +72,6 @@ private:
     
 
     float scale = 5.f;
-    u16 colour;
+    u16 colour = 0xFFFF;
     u8 settings = MENU_KEYPAD;
 };
