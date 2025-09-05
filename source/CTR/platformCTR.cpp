@@ -135,9 +135,33 @@ platformCTR::~platformCTR()
     gfxExit();
 }
 
-void loadRom(Chip8& chip8, bool& gameRunning)
+void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
 {
+    C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
+    std::filesystem::path path = "/3ds/";
+    C2D_Text t;
+    for(auto& dir_iter : std::filesystem::directory_iterator(path)) {
+        C2D_TextFontParse(&t, liberationSans, textBuf, dir_iter.path().filename().c_str());
+        C2D_TextOptimize(&t);
+    }
+    // std::filesystem::file
+    while(gameRunning = aptMainLoop()) {
+        hidScanInput();
+        const u32 kDown = hidKeysDown();
+        const u32 kHeld = hidKeysHeld();
+        // if(kDown & KEY_START) {
+        //     gameRunning = false;
+        //     break;
+        // }
+        
+        startFrame();
+        C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
+        C2D_SceneBegin(bottom);
+        C2D_DrawText(&t, C2D_WithColor, 50, 10, 0.f, .75f, .75f, C2D_Color32(255,255,255,255));
+        endFrame();
 
+    }
+    C2D_FontFree(liberationSans);
 }
 
 void platformCTR::processInput(bool* keypad)
@@ -252,6 +276,9 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     constexpr u32 black = C2D_Color32(0,0,0,255);
 
     switch(settings) {
+        case MENU_FILE:
+            
+            break;
         case MENU_COLOURS:
             for(int i = 0; i < 3; i++) {
                 RGBslider[i].render(white, white);
