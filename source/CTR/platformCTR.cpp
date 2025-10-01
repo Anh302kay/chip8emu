@@ -3,6 +3,7 @@
 #include <citro3d.h>
 #include <citro2d.h>
 #include <filesystem>
+#include <list>
 #include "platform.hpp"
 
 #include "chip8.hpp"
@@ -137,13 +138,44 @@ platformCTR::~platformCTR()
 
 void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
 {
-    C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
-    std::filesystem::path path = "/3ds/";
-    C2D_Text t;
-    for(auto& dir_iter : std::filesystem::directory_iterator(path)) {
-        C2D_TextFontParse(&t, liberationSans, textBuf, dir_iter.path().filename().c_str());
-        C2D_TextOptimize(&t);
+
+    FS_Archive sdmcArchive;
+    FSUSER_OpenArchive(&sdmcArchive, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""));
+
+    Handle dirHandle;
+    FSUSER_OpenDirectory(&dirHandle, sdmcArchive, fsMakePath(PATH_ASCII, "/"));
+    u32 entriesRead = 1;
+    FS_DirectoryEntry entry;
+
+    std::vector<std::string> files;
+    files.reserve(20);
+    while(entriesRead) {
+        entriesRead = 0;
+        FSDIR_Read(dirHandle, &entriesRead, 1, &entry);
+
+        if(!entriesRead)
+            break;
+            
+        if(entry.attributes & FS_ATTRIBUTE_HIDDEN)
+            continue;
+        
+        char name[262] = {0};
+        utf16_to_utf8((uint8_t*)name, entry.name, 262);
+        files.emplace_back(name);
     }
+
+    C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
+    std::list<C2D_Text> fileText;
+    // fileText.p
+
+    // std::filesystem::path path = "/";
+    // for(auto& dir_iter : std::filesystem::directory_iterator(path)) {
+    //     // if(dir_iter.is_)
+    //     C2D_Text text;
+    //     C2D_TextFontParse(&text, liberationSans, textBuf, dir_iter.path().filename().c_str());
+    //     C2D_TextOptimize(&text);
+    //     tt.emplace_back(text);
+    // }
     // std::filesystem::file
     while(gameRunning = aptMainLoop()) {
         hidScanInput();
@@ -157,7 +189,8 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         startFrame();
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
-        C2D_DrawText(&t, C2D_WithColor, 50, 10, 0.f, .75f, .75f, C2D_Color32(255,255,255,255));
+        for(int i = 0; i < tt.size(); i++)
+            C2D_DrawText(&tt[i], C2D_WithColor, 50, 10 + 20 * i, 0.f, .75f, .75f, C2D_Color32(255,255,255,255));
         endFrame();
 
     }
