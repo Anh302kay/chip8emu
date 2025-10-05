@@ -148,19 +148,11 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     
     std::vector<std::string> files = loadDirectory(path.string(), sdmcArchive);
 
+    C2D_TextBuf fileTextBuf = C2D_TextBufNew(4096);
     C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
-    std::deque<C2D_Text> fileText;
+    std::deque<C2D_Text> fileText = loadDirList(files, liberationSans, fileTextBuf);
     u16 selectedFile = 0;
-    
-    const size_t count = std::min<size_t>(22, files.size());
-    for(size_t i = 0; i < count; i++) {
-        if(i > files.size()-1)
-            break;
-        C2D_Text text;
-        C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
-        C2D_TextOptimize(&text);
-        fileText.push_back(text);
-    }
+    bool confirmBox = false;
 
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(190,190,190,255);
@@ -173,42 +165,32 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         const u32 kRepeat = hidKeysDownRepeat();
         
         if(kRepeat & KEY_UP) 
-            selectedFile = selectedFile == 0 ? 0 : selectedFile-1;
+            selectedFile = selectedFile == 0 ? 0 : --selectedFile;
 
         if(kRepeat & KEY_DOWN) 
-            selectedFile = selectedFile >= fileText.size()-1 ? fileText.size()-1 : selectedFile+1;
+            selectedFile = selectedFile >= fileText.size()-1 ? fileText.size()-1 : ++selectedFile;
 
-        if(kDown & KEY_A) {
-            if(std::filesystem::is_directory(path.string() + files[selectedFile])) {
+        if(kDown & KEY_A && !files.empty()) {
+            if(std::filesystem::is_directory(path.string() + files.at(selectedFile))) {
                 path += files[selectedFile] + "/";
                 files = loadDirectory(path.string(), sdmcArchive);
                 fileText.clear();
-                for(size_t i = 0; i < 22; i++) {
-                    if(i > files.size()-1)
-                        break;
-                    C2D_Text text;
-                    C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
-                    C2D_TextOptimize(&text);
-                    fileText.push_back(text);
-                }
+                C2D_TextBufClear(fileTextBuf);
+                fileText = loadDirList(files, liberationSans, fileTextBuf);
+                selectedFile = 0;
             }
             else {
 
             }
         }
 
-        if(kDown & KEY_B) {
+        if(kDown & KEY_B && path != "/") {
             path = getParentPath(path.string());
             files = loadDirectory(path.string(), sdmcArchive);
             fileText.clear();
-            for(size_t i = 0; i < 22; i++) {
-                if(i > files.size()-1)
-                    break;
-                C2D_Text text;
-                C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
-                C2D_TextOptimize(&text);
-                fileText.push_back(text);
-            }
+                C2D_TextBufClear(fileTextBuf);
+            fileText = loadDirList(files, liberationSans, fileTextBuf);
+            selectedFile = 0;
         }
 
         startFrame();
@@ -220,6 +202,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         endFrame();
 
     }
+    C2D_TextBufDelete(fileTextBuf);
     C2D_FontFree(liberationSans);
     FSUSER_CloseArchive(sdmcArchive);
 }
