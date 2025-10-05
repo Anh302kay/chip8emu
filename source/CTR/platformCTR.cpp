@@ -3,11 +3,13 @@
 #include <citro3d.h>
 #include <citro2d.h>
 #include <filesystem>
-#include <list>
+#include <ranges>
+#include <deque>
 #include "platform.hpp"
 
 #include "chip8.hpp"
 #include "platformCTR.hpp"
+#include "filesystem.hpp"
 
 constexpr u8 textLookup[16] = { 1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0, 0xB, 0xF};
 
@@ -142,59 +144,84 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     FS_Archive sdmcArchive;
     FSUSER_OpenArchive(&sdmcArchive, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""));
 
-    Handle dirHandle;
-    FSUSER_OpenDirectory(&dirHandle, sdmcArchive, fsMakePath(PATH_ASCII, "/"));
-    u32 entriesRead = 1;
-    FS_DirectoryEntry entry;
-
-    std::vector<std::string> files;
-    files.reserve(20);
-    while(entriesRead) {
-        entriesRead = 0;
-        FSDIR_Read(dirHandle, &entriesRead, 1, &entry);
-
-        if(!entriesRead)
-            break;
-            
-        if(entry.attributes & FS_ATTRIBUTE_HIDDEN)
-            continue;
-        
-        char name[262] = {0};
-        utf16_to_utf8((uint8_t*)name, entry.name, 262);
-        files.emplace_back(name);
-    }
+    std::filesystem::path path = "/";
+    
+    std::vector<std::string> files = loadDirectory(path.string(), sdmcArchive);
 
     C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
-    std::list<C2D_Text> fileText;
-    // fileText.p
+    std::deque<C2D_Text> fileText;
+    u16 selectedFile = 0;
+    
+    const size_t count = std::min<size_t>(22, files.size());
+    for(size_t i = 0; i < count; i++) {
+        if(i > files.size()-1)
+            break;
+        C2D_Text text;
+        C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
+        C2D_TextOptimize(&text);
+        fileText.push_back(text);
+    }
 
-    // std::filesystem::path path = "/";
-    // for(auto& dir_iter : std::filesystem::directory_iterator(path)) {
-    //     // if(dir_iter.is_)
-    //     C2D_Text text;
-    //     C2D_TextFontParse(&text, liberationSans, textBuf, dir_iter.path().filename().c_str());
-    //     C2D_TextOptimize(&text);
-    //     tt.emplace_back(text);
-    // }
-    // std::filesystem::file
+    constexpr u32 white = C2D_Color32(255,255,255,255);
+    constexpr u32 grey = C2D_Color32(190,190,190,255);
+    constexpr u32 black = C2D_Color32(0,0,0,255);
+    hidSetRepeatParameters(250, 30);
     while(gameRunning = aptMainLoop()) {
         hidScanInput();
         const u32 kDown = hidKeysDown();
         const u32 kHeld = hidKeysHeld();
-        // if(kDown & KEY_START) {
-        //     gameRunning = false;
-        //     break;
-        // }
+        const u32 kRepeat = hidKeysDownRepeat();
         
+        if(kRepeat & KEY_UP) 
+            selectedFile = selectedFile == 0 ? 0 : selectedFile-1;
+
+        if(kRepeat & KEY_DOWN) 
+            selectedFile = selectedFile >= fileText.size()-1 ? fileText.size()-1 : selectedFile+1;
+
+        if(kDown & KEY_A) {
+            if(std::filesystem::is_directory(path.string() + files[selectedFile])) {
+                path += files[selectedFile] + "/";
+                files = loadDirectory(path.string(), sdmcArchive);
+                fileText.clear();
+                for(size_t i = 0; i < 22; i++) {
+                    if(i > files.size()-1)
+                        break;
+                    C2D_Text text;
+                    C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
+                    C2D_TextOptimize(&text);
+                    fileText.push_back(text);
+                }
+            }
+            else {
+
+            }
+        }
+
+        if(kDown & KEY_B) {
+            path = getParentPath(path.string());
+            files = loadDirectory(path.string(), sdmcArchive);
+            fileText.clear();
+            for(size_t i = 0; i < 22; i++) {
+                if(i > files.size()-1)
+                    break;
+                C2D_Text text;
+                C2D_TextFontParse(&text, liberationSans, textBuf, files.at(i).c_str());
+                C2D_TextOptimize(&text);
+                fileText.push_back(text);
+            }
+        }
+
         startFrame();
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
-        for(int i = 0; i < tt.size(); i++)
-            C2D_DrawText(&tt[i], C2D_WithColor, 50, 10 + 20 * i, 0.f, .75f, .75f, C2D_Color32(255,255,255,255));
+        for(auto [index, text] : std::views::enumerate(fileText)) 
+            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 10 * index, 0.f, .5f, .5f, index == selectedFile ? white : grey);
+
         endFrame();
 
     }
     C2D_FontFree(liberationSans);
+    FSUSER_CloseArchive(sdmcArchive);
 }
 
 void platformCTR::processInput(bool* keypad)

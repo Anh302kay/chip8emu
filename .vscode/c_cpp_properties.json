@@ -53,7 +53,7 @@
                 "_UNICODE",
                 "__3DS__"
             ],
-            "cppStandard": "gnu++20",
+            "cppStandard": "gnu++23",
             "compilerPath": "E:\\msys64\\opt\\devkitPro\\devkitARM\\bin\\arm-none-eabi-g++.exe"
         }
     ],
