@@ -172,7 +172,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
 
         if(kDown & KEY_A && !files.empty()) {
             if(std::filesystem::is_directory(path.string() + files.at(selectedFile))) {
-                path += files[selectedFile] + "/";
+                path += files[selectedFile];
                 files = loadDirectory(path.string(), sdmcArchive);
                 fileText.clear();
                 C2D_TextBufClear(fileTextBuf);
@@ -188,7 +188,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             path = getParentPath(path.string());
             files = loadDirectory(path.string(), sdmcArchive);
             fileText.clear();
-                C2D_TextBufClear(fileTextBuf);
+            C2D_TextBufClear(fileTextBuf);
             fileText = loadDirList(files, liberationSans, fileTextBuf);
             selectedFile = 0;
         }
@@ -197,7 +197,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
         for(auto [index, text] : std::views::enumerate(fileText)) 
-            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 10 * index, 0.f, .5f, .5f, index == selectedFile ? white : grey);
+            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 12 * index, 0.f, .6f, .6f, index == selectedFile ? white : grey);
 
         endFrame();
 

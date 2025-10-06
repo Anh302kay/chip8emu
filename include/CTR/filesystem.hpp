@@ -22,10 +22,14 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
             
         if(entry.attributes & FS_ATTRIBUTE_HIDDEN)
             continue;
+
+        const bool isDirectory = entry.attributes & FS_ATTRIBUTE_DIRECTORY;
         
         char name[262] = {0};
         utf16_to_utf8((uint8_t*)name, entry.name, 262);
         files.emplace_back(name);
+        if(isDirectory)
+            files.back() += "/";
     }
     FSDIR_Close(dirHandle);
     svcCloseHandle(dirHandle);
@@ -34,7 +38,7 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
 
 std::deque<C2D_Text> loadDirList(std::vector<std::string>& files, C2D_Font& font, C2D_TextBuf& textBuf) {
     std::deque<C2D_Text> fileText;
-    const size_t count = std::min<size_t>(22, files.size());
+    const size_t count = std::min<size_t>(20, files.size());
     for(size_t i = 0; i < count; i++) {
         C2D_Text text;
         C2D_TextFontParse(&text, font, textBuf, files.at(i).c_str());
