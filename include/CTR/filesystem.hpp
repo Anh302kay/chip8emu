@@ -9,10 +9,11 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
     Handle dirHandle;
     FSUSER_OpenDirectory(&dirHandle, sdmcArchive, fsMakePath(PATH_ASCII, path.c_str()));
     u32 entriesRead = 1;
+    int dirCount = 0;
     FS_DirectoryEntry entry;
 
     std::vector<std::string> files;
-    files.reserve(20);
+    files.reserve(40);
     while(entriesRead) {
         entriesRead = 0;
         FSDIR_Read(dirHandle, &entriesRead, 1, &entry);
@@ -27,12 +28,18 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
         
         char name[262] = {0};
         utf16_to_utf8((uint8_t*)name, entry.name, 262);
-        files.emplace_back(name);
-        if(isDirectory)
-            files.back() += "/";
+        if(isDirectory) {
+            std::string file = name;
+            file += "/";
+            files.insert(files.begin() + dirCount, file);
+            dirCount++;
+        } else {
+            files.emplace_back(name);
+        }
     }
     FSDIR_Close(dirHandle);
     svcCloseHandle(dirHandle);
+
     return files;
 }
 
