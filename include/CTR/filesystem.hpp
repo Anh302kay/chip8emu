@@ -5,6 +5,20 @@
 #include <deque>
 #include <3ds.h>
 
+inline std::string toLower(const std::string &str) {
+    std::string result = str;
+    std::transform(
+        result.begin(), result.end(), result.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+    return result;
+}
+
+inline std::string getParentPath(std::string path) {
+    path.pop_back();
+    const size_t slash = path.find_last_of("/");
+    return path.substr(0, slash) + "/";
+}
+
 std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmcArchive) {
     Handle dirHandle;
     FSUSER_OpenDirectory(&dirHandle, sdmcArchive, fsMakePath(PATH_ASCII, path.c_str()));
@@ -40,6 +54,17 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
     FSDIR_Close(dirHandle);
     svcCloseHandle(dirHandle);
 
+    std::sort(files.begin(), files.end(), [](const std::string& a, const std::string& b) {
+        const std::string aConverted = toLower(a);
+        const std::string bConverted = toLower(b);
+        if(aConverted.back() == '/' && bConverted.back() != '/')
+            return true;
+        if(bConverted.back() == '/' && aConverted.back() != '/')
+            return false;
+
+        return aConverted<bConverted;
+    });
+
     return files;
 }
 
@@ -53,10 +78,4 @@ std::deque<C2D_Text> loadDirList(std::vector<std::string>& files, C2D_Font& font
         fileText.push_back(text);
     }
     return fileText;
-}
-
-std::string getParentPath(std::string path) {
-    path.pop_back();
-    const size_t slash = path.find_last_of("/");
-    return path.substr(0, slash) + "/";
 }

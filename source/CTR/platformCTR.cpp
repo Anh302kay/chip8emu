@@ -166,7 +166,6 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     bool confirmBox = false;
     bool confirmOption = false;
 
-
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(150,150,150,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
