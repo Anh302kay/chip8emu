@@ -38,7 +38,7 @@ std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmc
 
 std::deque<C2D_Text> loadDirList(std::vector<std::string>& files, C2D_Font& font, C2D_TextBuf& textBuf) {
     std::deque<C2D_Text> fileText;
-    const size_t count = std::min<size_t>(20, files.size());
+    const size_t count = std::min<size_t>(18, files.size());
     for(size_t i = 0; i < count; i++) {
         C2D_Text text;
         C2D_TextFontParse(&text, font, textBuf, files.at(i).c_str());

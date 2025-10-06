@@ -106,6 +106,15 @@ platformCTR::platformCTR()
     C2D_TextFontParse(&buttons[BUTTON_UNPAUSE], font, textUIBuf, "UNPAUSE");
     C2D_TextOptimize(&buttons[BUTTON_UNPAUSE]);
 
+    C2D_TextFontParse(&buttons[BUTTON_YES], font, textUIBuf, "YES");
+    C2D_TextOptimize(&buttons[BUTTON_YES]);
+
+    C2D_TextFontParse(&buttons[BUTTON_NO], font, textUIBuf, "NO");
+    C2D_TextOptimize(&buttons[BUTTON_NO]);
+
+    C2D_TextFontParse(&buttons[BUTTON_SURE], font, textUIBuf, "ARE YOU SURE?");
+    C2D_TextOptimize(&buttons[BUTTON_SURE]);
+
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -152,10 +161,14 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
     std::deque<C2D_Text> fileText = loadDirList(files, liberationSans, fileTextBuf);
     u16 selectedFile = 0;
+    u16 topEntry = 0; // top entry shown on screen
+    u64 buttonDelay = 0;
     bool confirmBox = false;
+    bool confirmOption = false;
+
 
     constexpr u32 white = C2D_Color32(255,255,255,255);
-    constexpr u32 grey = C2D_Color32(190,190,190,255);
+    constexpr u32 grey = C2D_Color32(150,150,150,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
     hidSetRepeatParameters(250, 30);
     while(gameRunning = aptMainLoop()) {
@@ -164,11 +177,32 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         const u32 kHeld = hidKeysHeld();
         const u32 kRepeat = hidKeysDownRepeat();
         
-        if(kRepeat & KEY_UP) 
-            selectedFile = selectedFile == 0 ? 0 : --selectedFile;
+        if(kRepeat & KEY_UP && selectedFile > 0) {
+            selectedFile--;
+            if(selectedFile < topEntry) {
+                topEntry--;
+                fileText.pop_back();
+                C2D_Text text;
+                C2D_TextFontParse(&text, liberationSans, fileTextBuf, files.at(selectedFile).c_str());
+                C2D_TextOptimize(&text);
+                fileText.push_front(text);
+            }
+        }
 
-        if(kRepeat & KEY_DOWN) 
-            selectedFile = selectedFile >= fileText.size()-1 ? fileText.size()-1 : ++selectedFile;
+        if(kRepeat & KEY_DOWN) {
+            selectedFile++;
+            if(selectedFile >= files.size() && !files.empty())
+                selectedFile = files.size()-1;
+
+            if(selectedFile >= topEntry + 18) {
+                topEntry++;
+                fileText.pop_front();
+                C2D_Text text;
+                C2D_TextFontParse(&text, liberationSans, fileTextBuf, files.at(selectedFile).c_str());
+                C2D_TextOptimize(&text);
+                fileText.push_back(text);
+            }
+        }
 
         if(kDown & KEY_A && !files.empty()) {
             if(std::filesystem::is_directory(path.string() + files.at(selectedFile))) {
@@ -178,9 +212,11 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
                 C2D_TextBufClear(fileTextBuf);
                 fileText = loadDirList(files, liberationSans, fileTextBuf);
                 selectedFile = 0;
+                topEntry = 0;
             }
-            else {
-
+            else if(!confirmBox) {
+                confirmBox = true;
+                buttonDelay = osGetTime();
             }
         }
 
@@ -191,13 +227,41 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             C2D_TextBufClear(fileTextBuf);
             fileText = loadDirList(files, liberationSans, fileTextBuf);
             selectedFile = 0;
+            topEntry = 0;
+        }
+
+        if(confirmBox) {
+            if(kDown & KEY_LEFT)
+                confirmOption = true;
+
+            if(kDown & KEY_RIGHT)
+                confirmOption = false;
+
+            if(kDown & KEY_A && buttonDelay + 100 < osGetTime()) {
+                if(confirmOption) {
+                    std::string totalPath = path.string() + files.at(selectedFile);
+                    chip8.loadROM(totalPath.c_str());
+                    break;
+                }
+                confirmBox = false;
+            }
         }
 
         startFrame();
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
         for(auto [index, text] : std::views::enumerate(fileText)) 
-            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 12 * index, 0.f, .6f, .6f, index == selectedFile ? white : grey);
+            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 12 * index, 0.f, .6f, .6f, index == selectedFile - topEntry ? white : grey);
+
+        if(confirmBox) {
+            C2D_DrawRectSolid(33, 28, 0, 255, 90, black);
+            C2D_DrawText(&buttons[BUTTON_SURE], C2D_WithColor | C2D_AlignCenter, 160, 40, 0, 0.8f, 0.8f, white);
+            C2D_DrawText(&fileText[selectedFile - topEntry], C2D_WithColor | C2D_AlignCenter, 160, 60, 0, 0.6f, 0.6f, white);
+            C2D_DrawRectSolid(85 + !confirmOption * 90, 77, 0, 50, 25, white);
+            C2D_DrawRectSolid(87 + !confirmOption * 90, 79, 0, 46, 21, black);
+            C2D_DrawText(&buttons[BUTTON_YES], C2D_WithColor | C2D_AlignCenter, 110, 80, 0, 0.7f, 0.7f, confirmOption ? white : grey);
+            C2D_DrawText(&buttons[BUTTON_NO], C2D_WithColor | C2D_AlignCenter, 200, 80, 0, 0.7f, 0.7f, !confirmOption ? white : grey);
+        }
 
         endFrame();
 

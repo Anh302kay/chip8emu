@@ -13,7 +13,10 @@ enum
     BUTTON_RESET = 0,
     BUTTON_PAUSE,
     BUTTON_UNPAUSE,
-    NUMBUTTONS = 3
+    BUTTON_YES,
+    BUTTON_NO,
+    BUTTON_SURE,
+    NUMBUTTONS = 6
 };
 
 enum
