@@ -19,6 +19,14 @@ inline std::string getParentPath(std::string path) {
     return path.substr(0, slash) + "/";
 }
 
+inline std::string getFilename(std::string path) {
+    if(path.back() == '/')
+        return "";
+
+    const size_t slash = path.find_last_of("/");
+    return path.substr(slash);
+}
+
 std::vector<std::string> loadDirectory(const std::string& path, FS_Archive& sdmcArchive) {
     Handle dirHandle;
     FSUSER_OpenDirectory(&dirHandle, sdmcArchive, fsMakePath(PATH_ASCII, path.c_str()));

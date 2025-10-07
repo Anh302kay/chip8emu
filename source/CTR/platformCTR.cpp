@@ -166,6 +166,11 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     bool confirmBox = false;
     bool confirmOption = false;
 
+    C2D_Text pathText;
+    C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
+    C2D_TextOptimize(&pathText);
+
+
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(150,150,150,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
@@ -212,6 +217,8 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
                 fileText = loadDirList(files, liberationSans, fileTextBuf);
                 selectedFile = 0;
                 topEntry = 0;
+                C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
+                C2D_TextOptimize(&pathText);
             }
             else if(!confirmBox) {
                 confirmBox = true;
@@ -227,6 +234,8 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             fileText = loadDirList(files, liberationSans, fileTextBuf);
             selectedFile = 0;
             topEntry = 0;
+            C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
+            C2D_TextOptimize(&pathText);
         }
 
         if(confirmBox) {
@@ -250,7 +259,9 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
         for(auto [index, text] : std::views::enumerate(fileText)) 
-            C2D_DrawText(&text, C2D_WithColor, 20, 10 + 12 * index, 0.f, .6f, .6f, index == selectedFile - topEntry ? white : grey);
+            C2D_DrawText(&text, C2D_WithColor, 20, 19 + 12 * index, 0.f, .6f, .6f, index == selectedFile - topEntry ? white : grey);
+        
+        C2D_DrawText(&pathText, C2D_WithColor, 15, 5, 0, 0.6f, 0.6f, black);
 
         if(confirmBox) {
             C2D_DrawRectSolid(33, 28, 0, 255, 90, black);
