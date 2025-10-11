@@ -16,7 +16,8 @@ enum
     BUTTON_YES,
     BUTTON_NO,
     BUTTON_SURE,
-    NUMBUTTONS = 6
+    BUTTON_LOADROM,
+    NUMBUTTONS = 7
 };
 
 enum
@@ -66,6 +67,7 @@ private:
 
     C2D_Text keypadText[16];
     C2D_Text buttons[NUMBUTTONS];
+    C2D_Text pathText;
     C2D_TextBuf textUIBuf;
     C2D_TextBuf textBuf;
     C2D_Font font;
@@ -76,5 +78,7 @@ private:
 
     float scale = 5.f;
     u16 colour = 0xFFFF;
+    u16 pathX = 0;
+    u16 pathW = 0;
     u8 settings = MENU_KEYPAD;
 };

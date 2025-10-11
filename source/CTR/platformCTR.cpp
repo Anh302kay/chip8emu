@@ -115,6 +115,9 @@ platformCTR::platformCTR()
     C2D_TextFontParse(&buttons[BUTTON_SURE], font, textUIBuf, "ARE YOU SURE?");
     C2D_TextOptimize(&buttons[BUTTON_SURE]);
 
+    C2D_TextFontParse(&buttons[BUTTON_LOADROM], font, textUIBuf, "LOAD ROM");
+    C2D_TextOptimize(&buttons[BUTTON_LOADROM]);
+
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -158,7 +161,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     std::vector<std::string> files = loadDirectory(path.string(), sdmcArchive);
 
     C2D_TextBuf fileTextBuf = C2D_TextBufNew(4096);
-    C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/LiberationSans-Bold.bcfnt");
+    C2D_Font liberationSans = C2D_FontLoad("romfs:/gfx/Inter_18pt-Bold.bcfnt");
     std::deque<C2D_Text> fileText = loadDirList(files, liberationSans, fileTextBuf);
     u16 selectedFile = 0;
     u16 topEntry = 0; // top entry shown on screen
@@ -170,7 +173,6 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
     C2D_TextOptimize(&pathText);
 
-
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(150,150,150,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
@@ -178,7 +180,6 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     while(gameRunning = aptMainLoop()) {
         hidScanInput();
         const u32 kDown = hidKeysDown();
-        const u32 kHeld = hidKeysHeld();
         const u32 kRepeat = hidKeysDownRepeat();
         
         if(kRepeat & KEY_UP && selectedFile > 0) {
@@ -249,6 +250,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
                 if(confirmOption) {
                     std::string totalPath = path.string() + files.at(selectedFile);
                     chip8.loadROM(totalPath.c_str());
+                    chip8.reset();
                     break;
                 }
                 confirmBox = false;
@@ -315,6 +317,17 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
 
     bool* keypad = chip8.keypad;    
     switch(settings) {
+        case MENU_SETTINGS:
+            if(kHeld & KEY_LEFT && pathX > 0)
+                pathX--;
+
+            if(kHeld & KEY_RIGHT)
+                pathX++;
+
+            if(touchedBox(touch, 6, 36, 86, 21))
+                loadRom(chip8, gameRunning);
+
+            break;
         case MENU_COLOURS:
             if(kHeld & KEY_TOUCH) {
                 for(slider& slider : RGBslider)
@@ -393,8 +406,13 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     constexpr u32 black = C2D_Color32(0,0,0,255);
 
     switch(settings) {
-        case MENU_FILE:
-            
+        case MENU_SETTINGS:
+            parseString(pathText, chip8.ROM.c_str()); //217,22
+            C2D_DrawText(&pathText, C2D_WithColor | C2D_AtBaseline, 10 - pathX, 20, 0, 0.3f, 0.3f, white);
+            C2D_DrawRectSolid(260, 0, 0, 70, 50, black);
+            C2D_DrawRectSolid(6, 36, 0, 86, 21, white);
+            C2D_DrawRectSolid(8, 38, 0, 82, 17, black);
+            C2D_DrawText(&buttons[BUTTON_LOADROM], C2D_WithColor, 10, 40, 0, 0.5f, 0.5f, white);
             break;
         case MENU_COLOURS:
             for(int i = 0; i < 3; i++) {
@@ -405,8 +423,7 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
             }
             break;
         case MENU_KEYPAD:
-            for(int i = 0; i < 16; i++)
-            {
+            for(int i = 0; i < 16; i++) {
                 const int scale = chip8.keypad[textLookup[i]] * 5;
                 constexpr int outlineSize = 2;
                 const int x = (i%4);
