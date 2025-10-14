@@ -70,15 +70,18 @@ private:
     C2D_Text keypadText[16];
     C2D_Text buttons[NUMBUTTONS];
     C2D_Text pathText;
+    C2D_Text timeText;
     C2D_TextBuf textUIBuf;
     C2D_TextBuf textBuf;
     C2D_Font font;
     ndspWaveBuf waveBuffer;
     touchPosition touch;
+    touchPosition touchOld;
     slider RGBslider[3];
     
 
-    float scale = 5.f;
+    float scale = 6.f;
+    int timeSlider = 2500;
     u16 colour = 0xFFFF;
     s16 pathX = 10;
     float pathW = 0;

@@ -334,7 +334,7 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
         }
 
     }
-
+    static bool slideLock = false;
     bool* keypad = chip8.keypad;    
     switch(settings) {
         case MENU_SETTINGS:
@@ -350,8 +350,22 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(pathX > 216)
                 pathX = -pathW;
 
-            if(touchedBox(touch, 6, 36, 86, 21))
+            if(touchedBox(touch, 6, 36, 86, 21) && kDown & KEY_TOUCH)
                 loadRom(chip8, gameRunning);
+
+            if(touchedBox(touch, 96, 36, 160, 21))
+                slideLock = true;       
+            
+            if(slideLock) {
+                if(kDown & KEY_TOUCH)
+                    touchOld = touch;
+                if(kHeld & KEY_TOUCH) {
+                    const s16 x = touch.px;
+                    const s16 oldX = touchOld.px;
+                    timeSlider += x - oldX;
+                    touchOld = touch;
+                }
+            }
 
             break;
         case MENU_COLOURS:
@@ -441,7 +455,12 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
             drawOutlinedBox(6, 36, 86, 21, 2, white, black);
             C2D_DrawText(&buttons[BUTTON_LOADROM], C2D_WithColor, 10, 40, 0, 0.5f, 0.5f, white);
 
+            drawOutlinedBox(96, 36, 160, 21, 2, white, black);
+            parseString(timeText, std::to_string(timeStep).c_str());
             C2D_DrawText(&buttons[BUTTON_TIMESCALE], C2D_WithColor, 100, 40, 0, 0.5f, 0.5f, white);
+            C2D_DrawText(&timeText, C2D_WithColor, 190, 40, 0, 0.5f, 0.5f, white);
+            if(hidKeysHeld() & KEY_TOUCH)
+                timeStep = timeSlider;
 
             break;
         case MENU_COLOURS:
