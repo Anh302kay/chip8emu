@@ -28,6 +28,11 @@ static constexpr void fillBuffer(s8* buffer, int size) {
     }
 }
 
+static constexpr void drawOutlinedBox(int x, int y, int w, int h, int thickness, u32 borderColour, u32 fillColour) {
+    C2D_DrawRectSolid(x, y, 0, w, h, borderColour);
+    C2D_DrawRectSolid(x+thickness, y+thickness, 0, w-thickness*2, h-thickness*2, fillColour);
+}
+
 template <typename T1, typename T2>
 static constexpr bool touchedBox(const touchPosition& touch, const T1 x, const T1 y, const T2 w, const T2 h) {
     return touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
@@ -51,7 +56,6 @@ void platformCTR::parseString(C2D_Text& text, const char* str)
     }
     C2D_TextOptimize(&text);
 }
-
 
 platformCTR::platformCTR()
 {
@@ -118,6 +122,9 @@ platformCTR::platformCTR()
     C2D_TextFontParse(&buttons[BUTTON_LOADROM], font, textUIBuf, "LOAD ROM");
     C2D_TextOptimize(&buttons[BUTTON_LOADROM]);
 
+    C2D_TextFontParse(&buttons[BUTTON_TIMESCALE], font, textUIBuf, "TIMESCALE:");
+    C2D_TextOptimize(&buttons[BUTTON_TIMESCALE]);
+
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -156,7 +163,13 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     FS_Archive sdmcArchive;
     FSUSER_OpenArchive(&sdmcArchive, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""));
 
-    std::filesystem::path path = "/";
+    if(!std::filesystem::is_directory("/roms/"))
+        std::filesystem::create_directory("/roms/");
+
+    if(!std::filesystem::is_directory("/roms/chip8/"))
+        std::filesystem::create_directory("/roms/chip8/");
+
+    std::filesystem::path path = "/roms/chip8/";
     
     std::vector<std::string> files = loadDirectory(path.string(), sdmcArchive);
 
@@ -182,7 +195,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
         const u32 kDown = hidKeysDown();
         const u32 kRepeat = hidKeysDownRepeat();
         
-        if(kRepeat & KEY_UP && selectedFile > 0) {
+        if(kRepeat & KEY_UP && selectedFile > 0 && !confirmBox) {
             selectedFile--;
             if(selectedFile < topEntry) {
                 topEntry--;
@@ -194,7 +207,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             }
         }
 
-        if(kRepeat & KEY_DOWN) {
+        if(kRepeat & KEY_DOWN && !confirmBox) {
             selectedFile++;
             if(selectedFile >= files.size() && !files.empty())
                 selectedFile = files.size()-1;
@@ -238,6 +251,11 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
             C2D_TextOptimize(&pathText);
         }
+        else if (kDown & KEY_B && path == "/") {
+            settings = MENU_KEYPAD;
+            gameRunning = false;
+            break;
+        }
 
         if(confirmBox) {
             if(kDown & KEY_LEFT)
@@ -249,15 +267,18 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             if(kDown & KEY_A && buttonDelay + 100 < osGetTime()) {
                 if(confirmOption) {
                     std::string totalPath = path.string() + files.at(selectedFile);
+                    settings = MENU_KEYPAD;
                     chip8.loadROM(totalPath.c_str());
                     chip8.reset();
+                    gameRunning = false;
+                    pathX = 10;
                     break;
                 }
                 confirmBox = false;
             }
         }
 
-        startFrame();
+        C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
         C2D_TargetClear(bottom, C2D_Color32f(0.0f, 1.0f, 0.0f, 1.0f));
         C2D_SceneBegin(bottom);
         for(auto [index, text] : std::views::enumerate(fileText)) 
@@ -269,8 +290,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             C2D_DrawRectSolid(33, 28, 0, 255, 90, black);
             C2D_DrawText(&buttons[BUTTON_SURE], C2D_WithColor | C2D_AlignCenter, 160, 40, 0, 0.8f, 0.8f, white);
             C2D_DrawText(&fileText[selectedFile - topEntry], C2D_WithColor | C2D_AlignCenter, 160, 60, 0, 0.6f, 0.6f, white);
-            C2D_DrawRectSolid(85 + !confirmOption * 90, 77, 0, 50, 25, white);
-            C2D_DrawRectSolid(87 + !confirmOption * 90, 79, 0, 46, 21, black);
+            drawOutlinedBox(85 + !confirmOption * 90, 77, 50, 25, 2, white, black);
             C2D_DrawText(&buttons[BUTTON_YES], C2D_WithColor | C2D_AlignCenter, 110, 80, 0, 0.7f, 0.7f, confirmOption ? white : grey);
             C2D_DrawText(&buttons[BUTTON_NO], C2D_WithColor | C2D_AlignCenter, 200, 80, 0, 0.7f, 0.7f, !confirmOption ? white : grey);
         }
@@ -318,11 +338,17 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
     bool* keypad = chip8.keypad;    
     switch(settings) {
         case MENU_SETTINGS:
-            if(kHeld & KEY_LEFT && pathX > 0)
-                pathX--;
+            if(kHeld & KEY_LEFT)
+                pathX++;
 
             if(kHeld & KEY_RIGHT)
-                pathX++;
+                pathX--;
+
+            if(pathX < -pathW)
+                pathX = 216;
+
+            if(pathX > 216)
+                pathX = -pathW;
 
             if(touchedBox(touch, 6, 36, 86, 21))
                 loadRom(chip8, gameRunning);
@@ -408,11 +434,15 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     switch(settings) {
         case MENU_SETTINGS:
             parseString(pathText, chip8.ROM.c_str()); //217,22
-            C2D_DrawText(&pathText, C2D_WithColor | C2D_AtBaseline, 10 - pathX, 20, 0, 0.3f, 0.3f, white);
+            C2D_TextGetDimensions(&pathText, 0.3f, 0.3f, &pathW, NULL);
+            C2D_DrawText(&pathText, C2D_WithColor | C2D_AtBaseline, pathX, 20, 0, 0.3f, 0.3f, white);
             C2D_DrawRectSolid(260, 0, 0, 70, 50, black);
-            C2D_DrawRectSolid(6, 36, 0, 86, 21, white);
-            C2D_DrawRectSolid(8, 38, 0, 82, 17, black);
+
+            drawOutlinedBox(6, 36, 86, 21, 2, white, black);
             C2D_DrawText(&buttons[BUTTON_LOADROM], C2D_WithColor, 10, 40, 0, 0.5f, 0.5f, white);
+
+            C2D_DrawText(&buttons[BUTTON_TIMESCALE], C2D_WithColor, 100, 40, 0, 0.5f, 0.5f, white);
+
             break;
         case MENU_COLOURS:
             for(int i = 0; i < 3; i++) {

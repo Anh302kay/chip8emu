@@ -17,7 +17,8 @@ enum
     BUTTON_NO,
     BUTTON_SURE,
     BUTTON_LOADROM,
-    NUMBUTTONS = 7
+    BUTTON_TIMESCALE,
+    NUMBUTTONS = 8
 };
 
 enum
@@ -59,6 +60,7 @@ public:
     void render(uint8_t* videoRam);
     void endFrame();
     void drawUI(Chip8& chip8, int& timeStep);
+    void resetAccumulator(auto& previous, auto& current, auto& accumulator);
 private:
     void parseString(C2D_Text& text, const char* str);
     C3D_RenderTarget* top;
@@ -78,7 +80,13 @@ private:
 
     float scale = 5.f;
     u16 colour = 0xFFFF;
-    u16 pathX = 0;
-    u16 pathW = 0;
+    s16 pathX = 10;
+    float pathW = 0;
     u8 settings = MENU_KEYPAD;
 };
+
+inline void platformCTR::resetAccumulator(auto& previous, auto& current, auto& accumulator) {
+    current = std::chrono::high_resolution_clock::now();
+    previous = current;
+    accumulator += current - previous;
+}

@@ -37,8 +37,15 @@ int main(int argc, char* argv[])
         while(accumulator > std::chrono::microseconds(timeStep)) {
             platform.processInput(chip8, gameRunning);
 
+            #ifdef __3DS__
+            if(!gameRunning) {
+                platform.resetAccumulator(previous, current, accumulator);
+                break;
+            }
+            #else
             if(!gameRunning)
                 break;
+            #endif
 
             if(chip8.soundTimer > 0)
                 platform.playSound();
