@@ -36,6 +36,7 @@ struct slider
     int x, y;
     int value;
     void render(u32 lineColour = C2D_Color32(1.f,1.f,1.f,1.f), u32 sliderColour = C2D_Color32(1.f,1.f,1.f,1.f));
+    void renderHorizontal(u32 lineColour = C2D_Color32(1.f,1.f,1.f,1.f), u32 sliderColour = C2D_Color32(1.f,1.f,1.f,1.f));
     enum
     {
         RED,
@@ -78,6 +79,7 @@ private:
     touchPosition touch;
     touchPosition touchOld;
     slider RGBslider[3];
+    slider scaleSlider;
     
 
     float scale = 6.f;

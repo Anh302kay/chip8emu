@@ -38,8 +38,7 @@ static constexpr bool touchedBox(const touchPosition& touch, const T1 x, const T
     return touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
 }  
 
-void slider::render(u32 lineColour, u32 sliderColour)
-{
+void slider::render(u32 lineColour, u32 sliderColour) {
     const int range = max-min;
     const float offset = (float)height/(float)range;
 
@@ -47,6 +46,14 @@ void slider::render(u32 lineColour, u32 sliderColour)
     C2D_DrawRectSolid(x, y + height - offset*value - 5.f, 0, width , 5, sliderColour);
 
 }
+
+void slider::renderHorizontal(u32 lineColour = C2D_Color32(1.f,1.f,1.f,1.f), u32 sliderColour = C2D_Color32(1.f,1.f,1.f,1.f)) {
+    const int range = max-min;
+    const float offset = (float)width/(float)range;
+    C2D_DrawLine(x, y+height/2, lineColour, x+width, y+height/2, lineColour, 2, 0);
+    C2D_DrawRectSolid(x + width - offset*value - 5.f, y, 0, 5 , height, sliderColour);
+}
+
 
 void platformCTR::parseString(C2D_Text& text, const char* str)
 {
