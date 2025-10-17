@@ -47,11 +47,11 @@ void slider::render(u32 lineColour, u32 sliderColour) {
 
 }
 
-void slider::renderHorizontal(u32 lineColour = C2D_Color32(1.f,1.f,1.f,1.f), u32 sliderColour = C2D_Color32(1.f,1.f,1.f,1.f)) {
+void slider::renderHorizontal(u32 lineColour, u32 sliderColour) {
     const int range = max-min;
     const float offset = (float)width/(float)range;
     C2D_DrawLine(x, y+height/2, lineColour, x+width, y+height/2, lineColour, 2, 0);
-    C2D_DrawRectSolid(x + width - offset*value - 5.f, y, 0, 5 , height, sliderColour);
+    C2D_DrawRectSolid(x + offset*value, y, 0, 5 , height, sliderColour);
 }
 
 
@@ -107,6 +107,8 @@ platformCTR::platformCTR()
             .value = 31 
         };
     }
+
+    scaleSlider = {.width = 160, .height = 10, .min = 0, .max = 6, .x = 40, .y = 200, .value = 6};
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
@@ -360,6 +362,15 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(touchedBox(touch, 6, 36, 86, 21) && kDown & KEY_TOUCH)
                 loadRom(chip8, gameRunning);
 
+            if(touchedBox(touch, scaleSlider.x-5, scaleSlider.y-5, scaleSlider.width+10, scaleSlider.height+10 )) {
+                const int pointX = touch.px - scaleSlider.x;
+                const float range = scaleSlider.max-scaleSlider.min;
+                const float offset = scaleSlider.width/range;
+                scaleSlider.value = scaleSlider.min + pointX/offset;
+                scaleSlider.value = scaleSlider.value > scaleSlider.max ? scaleSlider.max : scaleSlider.value < scaleSlider.min ? scaleSlider.max : scaleSlider.value; // limit to range
+                scale = scaleSlider.value;
+            }
+
             if(touchedBox(touch, 96, 36, 160, 21))
                 slideLock = true;       
             
@@ -463,9 +474,10 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
             C2D_DrawText(&buttons[BUTTON_LOADROM], C2D_WithColor, 10, 40, 0, 0.5f, 0.5f, white);
 
             drawOutlinedBox(96, 36, 160, 21, 2, white, black);
-            parseString(timeText, std::to_string(timeStep).c_str());
+            parseString(timeText, std::to_string(scaleSlider.value).c_str());
             C2D_DrawText(&buttons[BUTTON_TIMESCALE], C2D_WithColor, 100, 40, 0, 0.5f, 0.5f, white);
             C2D_DrawText(&timeText, C2D_WithColor, 190, 40, 0, 0.5f, 0.5f, white);
+            scaleSlider.renderHorizontal(white, white);
             if(hidKeysHeld() & KEY_TOUCH)
                 timeStep = timeSlider;
 
