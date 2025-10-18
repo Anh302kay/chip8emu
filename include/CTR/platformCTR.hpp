@@ -81,7 +81,9 @@ private:
     touchPosition touchOld;
     slider RGBslider[3];
     slider scaleSlider;
-    
+
+    C2D_SpriteSheet iconSheet;
+    C2D_Image icons[3];
 
     float scale = 6.f;
     int timeSlider = 2500;

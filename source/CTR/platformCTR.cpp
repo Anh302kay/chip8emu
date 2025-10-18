@@ -107,8 +107,11 @@ platformCTR::platformCTR()
             .value = 31 
         };
     }
-
     scaleSlider = {.width = 150, .height = 8, .min = 0, .max = 6, .x = 101, .y = 49, .value = 6};
+
+    iconSheet = C2D_SpriteSheetLoad("romfs:/gfx/icons.t3x");
+    for(int i = 0; i <3; i++)
+    icons[i] = C2D_SpriteSheetGetImage(iconSheet, i);
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
@@ -518,7 +521,8 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
     }
 
     for(int i = 0; i < 3; i++) {
-        C2D_DrawRectSolid(267,18+65*i , 0, 47, 47, white);
+        // C2D_DrawRectSolid(267,18+65*i , 0, 47, 47, white);
+        C2D_DrawImageAt(icons[i], 267,18+65*i, 0);
     }
     C2D_DrawLine(317, 18+65*settings-5, white, 317, 18+65*settings+52, white, 2, 0);
 
