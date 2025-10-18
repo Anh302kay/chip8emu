@@ -36,7 +36,7 @@ static constexpr void drawOutlinedBox(int x, int y, int w, int h, int thickness,
 template <typename T1, typename T2>
 static constexpr bool touchedBox(const touchPosition& touch, const T1 x, const T1 y, const T2 w, const T2 h) {
     return touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
-}  
+}
 
 void slider::render(u32 lineColour, u32 sliderColour) {
     const int range = max-min;
@@ -51,7 +51,7 @@ void slider::renderHorizontal(u32 lineColour, u32 sliderColour) {
     const int range = max-min;
     const float offset = (float)width/(float)range;
     C2D_DrawLine(x, y+height/2, lineColour, x+width, y+height/2, lineColour, 2, 0);
-    C2D_DrawRectSolid(x + offset*value, y, 0, 5 , height, sliderColour);
+    C2D_DrawRectSolid(x + offset*value, y, 0, 4 , height, sliderColour);
 }
 
 
@@ -108,7 +108,7 @@ platformCTR::platformCTR()
         };
     }
 
-    scaleSlider = {.width = 160, .height = 10, .min = 0, .max = 6, .x = 40, .y = 200, .value = 6};
+    scaleSlider = {.width = 150, .height = 8, .min = 0, .max = 6, .x = 101, .y = 49, .value = 6};
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
@@ -133,6 +133,9 @@ platformCTR::platformCTR()
 
     C2D_TextFontParse(&buttons[BUTTON_TIMESCALE], font, textUIBuf, "TIMESCALE:");
     C2D_TextOptimize(&buttons[BUTTON_TIMESCALE]);
+
+    C2D_TextFontParse(&buttons[BUTTON_SCALE], font, textUIBuf, "SCALE:");
+    C2D_TextOptimize(&buttons[BUTTON_SCALE]);
 
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
@@ -325,6 +328,7 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
     hidTouchRead(&touch);
     const u32 kDown = hidKeysDown();
     const u32 kHeld = hidKeysHeld();
+    const u32 kUp = hidKeysUp();
 
     if(kDown & KEY_TOUCH) {
         float width = 0.f;
@@ -371,7 +375,7 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
                 scale = scaleSlider.value;
             }
 
-            if(touchedBox(touch, 96, 36, 160, 21))
+            if(touchedBox(touch, 6, 60, 248, 21))
                 slideLock = true;       
             
             if(slideLock) {
@@ -383,6 +387,9 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
                     timeSlider += x - oldX;
                     touchOld = touch;
                 }
+                if(kUp & KEY_TOUCH)
+                    slideLock = false;
+
             }
 
             break;
@@ -473,11 +480,14 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
             drawOutlinedBox(6, 36, 86, 21, 2, white, black);
             C2D_DrawText(&buttons[BUTTON_LOADROM], C2D_WithColor, 10, 40, 0, 0.5f, 0.5f, white);
 
-            drawOutlinedBox(96, 36, 160, 21, 2, white, black);
-            parseString(timeText, std::to_string(scaleSlider.value).c_str());
-            C2D_DrawText(&buttons[BUTTON_TIMESCALE], C2D_WithColor, 100, 40, 0, 0.5f, 0.5f, white);
-            C2D_DrawText(&timeText, C2D_WithColor, 190, 40, 0, 0.5f, 0.5f, white);
+            C2D_DrawText(&buttons[BUTTON_SCALE], C2D_WithColor, 145, 36, 0, 0.5f, 0.5f, white);
+            C2D_DrawText(&keypadText[scaleSlider.value], C2D_WithColor, 200, 36, 0, 0.5f, 0.5f, white);
             scaleSlider.renderHorizontal(white, white);
+
+            drawOutlinedBox(6, 60, 248, 21, 2, white, black);
+            parseString(timeText, std::to_string(timeStep).c_str());
+            C2D_DrawText(&buttons[BUTTON_TIMESCALE], C2D_WithColor, 70, 64, 0, 0.5f, 0.5f, white);
+            C2D_DrawText(&timeText, C2D_WithColor, 160, 64, 0, 0.5f, 0.5f, white);
             if(hidKeysHeld() & KEY_TOUCH)
                 timeStep = timeSlider;
 

@@ -18,7 +18,8 @@ enum
     BUTTON_SURE,
     BUTTON_LOADROM,
     BUTTON_TIMESCALE,
-    NUMBUTTONS = 8
+    BUTTON_SCALE,
+    NUMBUTTONS = 9
 };
 
 enum
