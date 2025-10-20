@@ -111,7 +111,7 @@ platformCTR::platformCTR()
 
     iconSheet = C2D_SpriteSheetLoad("romfs:/gfx/icons.t3x");
     for(int i = 0; i <3; i++)
-    icons[i] = C2D_SpriteSheetGetImage(iconSheet, i);
+        icons[i] = C2D_SpriteSheetGetImage(iconSheet, i);
 
     C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
     C2D_TextOptimize(&buttons[BUTTON_RESET]);
