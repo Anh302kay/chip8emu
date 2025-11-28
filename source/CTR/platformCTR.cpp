@@ -140,6 +140,9 @@ platformCTR::platformCTR()
     C2D_TextFontParse(&buttons[BUTTON_SCALE], font, textUIBuf, "SCALE:");
     C2D_TextOptimize(&buttons[BUTTON_SCALE]);
 
+    C2D_TextFontParse(&buttons[BUTTON_KEYBOARD], font, textUIBuf, "KEYBOARD");
+    C2D_TextOptimize(&buttons[BUTTON_KEYBOARD]);
+
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -369,6 +372,12 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(touchedBox(touch, 6, 36, 86, 21) && kDown & KEY_TOUCH)
                 loadRom(chip8, gameRunning);
 
+            if(touchedBox(touch, 180, 82, 40, 10) && kDown & KEY_TOUCH) // reset
+                timeSlider = 2500;
+
+            if(touchedBox(touch, 50, 82, 60, 10) && kDown & KEY_TOUCH) // keyboard
+                ;
+
             if(touchedBox(touch, scaleSlider.x-5, scaleSlider.y-5, scaleSlider.width+10, scaleSlider.height+10 )) {
                 const int pointX = touch.px - scaleSlider.x;
                 const float range = scaleSlider.max-scaleSlider.min;
@@ -493,6 +502,9 @@ void platformCTR::drawUI(Chip8& chip8, int& timeStep)
             C2D_DrawText(&timeText, C2D_WithColor, 160, 64, 0, 0.5f, 0.5f, white);
             if(hidKeysHeld() & KEY_TOUCH)
                 timeStep = timeSlider;
+
+            C2D_DrawText(&buttons[BUTTON_RESET], C2D_WithColor, 180, 82, 0, 0.4, 0.4, white);
+            C2D_DrawText(&buttons[BUTTON_KEYBOARD], C2D_WithColor, 50, 82, 0, 0.4, 0.4, white);
 
             break;
         case MENU_COLOURS:
