@@ -369,16 +369,28 @@ void platformCTR::processInput(Chip8& chip8, bool& gameRunning)
             if(pathX > 216)
                 pathX = -pathW;
 
-            if(touchedBox(touch, 6, 36, 86, 21) && kDown & KEY_TOUCH)
+            if(touchedBox(touch, 6, 36, 86, 21) && kDown & KEY_TOUCH && !slideLock)
                 loadRom(chip8, gameRunning);
 
-            if(touchedBox(touch, 180, 82, 40, 10) && kDown & KEY_TOUCH) // reset
+            if(touchedBox(touch, 180, 82, 40, 10) && kDown & KEY_TOUCH && !slideLock) // reset
                 timeSlider = 2500;
 
-            if(touchedBox(touch, 50, 82, 60, 10) && kDown & KEY_TOUCH) // keyboard
-                ;
+            if(touchedBox(touch, 50, 82, 60, 10) && kDown & KEY_TOUCH) { // keyboard
+                static SwkbdState softwareKeyboard;
+                static SwkbdButton button;
+                static char myBuf[6];
+                swkbdInit(&softwareKeyboard, SWKBD_TYPE_NUMPAD, 2, 5);
+                swkbdSetPasswordMode(&softwareKeyboard, SWKBD_PASSWORD_NONE);
+                swkbdSetValidation(&softwareKeyboard, SWKBD_ANYTHING, 0, 0);
+                swkbdSetFeatures(&softwareKeyboard, SWKBD_FIXED_WIDTH);
+                // swkbdSetNumpadKeys(&softwareKeyboard, L'ツ', L'益');
+			    button = swkbdInputText(&softwareKeyboard, myBuf, sizeof(myBuf));
+                if(button == SWKBD_BUTTON_CONFIRM)
+                    timeSlider = std::atoi(myBuf);
+                gameRunning = false;
+            }
 
-            if(touchedBox(touch, scaleSlider.x-5, scaleSlider.y-5, scaleSlider.width+10, scaleSlider.height+10 )) {
+            if(touchedBox(touch, scaleSlider.x-5, scaleSlider.y-5, scaleSlider.width+10, scaleSlider.height+10 ) && !slideLock) {
                 const int pointX = touch.px - scaleSlider.x;
                 const float range = scaleSlider.max-scaleSlider.min;
                 const float offset = scaleSlider.width/range;
