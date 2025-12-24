@@ -207,7 +207,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
     constexpr u32 white = C2D_Color32(255,255,255,255);
     constexpr u32 grey = C2D_Color32(150,150,150,255);
     constexpr u32 black = C2D_Color32(0,0,0,255);
-    hidSetRepeatParameters(250, 30);
+    hidSetRepeatParameters(22, 8);
     while(gameRunning = aptMainLoop()) {
         hidScanInput();
         const u32 kDown = hidKeysDown();
@@ -258,7 +258,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             }
         }
 
-        if(kDown & KEY_B && path != "/") {
+        if(kDown & KEY_B && path != "/" && !confirmBox) {
             path = getParentPath(path.string());
             files = loadDirectory(path.string(), sdmcArchive);
             fileText.clear();
@@ -269,7 +269,7 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
             C2D_TextFontParse(&pathText, liberationSans, fileTextBuf, path.c_str());
             C2D_TextOptimize(&pathText);
         }
-        else if (kDown & KEY_B && path == "/") {
+        else if (kDown & KEY_B && path == "/" && !confirmBox) {
             settings = MENU_KEYPAD;
             gameRunning = false;
             break;
@@ -294,6 +294,8 @@ void platformCTR::loadRom(Chip8& chip8, bool& gameRunning)
                 }
                 confirmBox = false;
             }
+            if(kDown & KEY_B)
+                confirmBox = false;
         }
 
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);

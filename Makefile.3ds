@@ -41,8 +41,8 @@ GRAPHICS	:=	gfx
 #GFXBUILD	:=	$(BUILD)
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-APP_TITLE   := Chip 8 Emulator
-APP_DESCRIPTION := A Chip 8 emulator
+APP_TITLE   := Chip8Emu
+APP_DESCRIPTION := A Chip 8 Emulator
 APP_AUTHOR  := Anh302kay
 ICON := icon.png
 
@@ -187,8 +187,8 @@ endif
 
 cia:
 	@arm-none-eabi-strip $(TARGET).elf -o $(TARGET)-strip.elf
-	@tools/bannertool makebanner -ci banner/test.cgfx -a romfs/sound/sound_hit.wav -o banner/banner.bnr
-	@tools/makerom -f cia -rsf 3ds.rsf -elf $(TARGET)-strip.elf -icon $(OUTPUT).smdh -banner banner/banner.bnr -o $(TARGET).cia
+	@bannertool makebanner -i gfx/banner.png -a gfx/banner.wav -o banner.bnr
+	@makerom -f cia -rsf 3ds.rsf -elf $(TARGET)-strip.elf -icon $(OUTPUT).smdh -banner banner.bnr -o $(TARGET).cia
 
 #---------------------------------------------------------------------------------
 clean:

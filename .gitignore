@@ -6,8 +6,13 @@ romfs
 *.ch8
 imgui.ini
 chip8.3dsx
+chip8.cia
+chip8-strip.elf
 chip8.elf
 chip8.smdh
 chip8emu.3dsx
+chip8emu.cia
+chip8emu-strip.elf
 chip8emu.elf
 chip8emu.smdh
+banner.bnr
