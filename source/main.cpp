@@ -23,8 +23,10 @@ int main(int argc, char* argv[])
     bool gameRunning = true;
     platform.loadRom(chip8, gameRunning);
 
+    #ifdef __3DS__
     gameRunning = aptMainLoop();
-
+    #endif
+    
     auto previous = std::chrono::high_resolution_clock::now();
     auto current = previous;
 

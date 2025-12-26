@@ -13,6 +13,20 @@
 
 constexpr u8 textLookup[16] = { 1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0, 0xB, 0xF};
 
+constexpr const char* buttonStr[] = {
+    "RESET",
+    "PAUSE",
+    "UNPAUSE",
+    "YES",
+    "NO",
+    "ARE YOU SURE?",
+    "LOAD ROM",
+    "TIMESCALE:",
+    "SCALE:",
+    "KEYBOARD"
+};
+
+
 static constexpr size_t posToTex(u16 index) 
 {
     constexpr int width = 64;
@@ -53,7 +67,6 @@ void slider::renderHorizontal(u32 lineColour, u32 sliderColour) {
     C2D_DrawLine(x, y+height/2, lineColour, x+width, y+height/2, lineColour, 2, 0);
     C2D_DrawRectSolid(x + offset*value, y, 0, 4 , height, sliderColour);
 }
-
 
 void platformCTR::parseString(C2D_Text& text, const char* str)
 {
@@ -113,35 +126,10 @@ platformCTR::platformCTR()
     for(int i = 0; i <3; i++)
         icons[i] = C2D_SpriteSheetGetImage(iconSheet, i);
 
-    C2D_TextFontParse(&buttons[BUTTON_RESET], font, textUIBuf, "RESET");
-    C2D_TextOptimize(&buttons[BUTTON_RESET]);
-
-    C2D_TextFontParse(&buttons[BUTTON_PAUSE], font, textUIBuf, "PAUSE");
-    C2D_TextOptimize(&buttons[BUTTON_PAUSE]);
-
-    C2D_TextFontParse(&buttons[BUTTON_UNPAUSE], font, textUIBuf, "UNPAUSE");
-    C2D_TextOptimize(&buttons[BUTTON_UNPAUSE]);
-
-    C2D_TextFontParse(&buttons[BUTTON_YES], font, textUIBuf, "YES");
-    C2D_TextOptimize(&buttons[BUTTON_YES]);
-
-    C2D_TextFontParse(&buttons[BUTTON_NO], font, textUIBuf, "NO");
-    C2D_TextOptimize(&buttons[BUTTON_NO]);
-
-    C2D_TextFontParse(&buttons[BUTTON_SURE], font, textUIBuf, "ARE YOU SURE?");
-    C2D_TextOptimize(&buttons[BUTTON_SURE]);
-
-    C2D_TextFontParse(&buttons[BUTTON_LOADROM], font, textUIBuf, "LOAD ROM");
-    C2D_TextOptimize(&buttons[BUTTON_LOADROM]);
-
-    C2D_TextFontParse(&buttons[BUTTON_TIMESCALE], font, textUIBuf, "TIMESCALE:");
-    C2D_TextOptimize(&buttons[BUTTON_TIMESCALE]);
-
-    C2D_TextFontParse(&buttons[BUTTON_SCALE], font, textUIBuf, "SCALE:");
-    C2D_TextOptimize(&buttons[BUTTON_SCALE]);
-
-    C2D_TextFontParse(&buttons[BUTTON_KEYBOARD], font, textUIBuf, "KEYBOARD");
-    C2D_TextOptimize(&buttons[BUTTON_KEYBOARD]);
+    for(int i = 0; i < NUMBUTTONS; i++) {
+        C2D_TextFontParse(&buttons[i], font, textUIBuf, buttonStr[i]);
+        C2D_TextOptimize(&buttons[i]);
+    }
 
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_MONO);

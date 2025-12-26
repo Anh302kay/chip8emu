@@ -47,6 +47,7 @@ struct slider
     };
 
 };
+
 class platformCTR : platform
 {
 public:
